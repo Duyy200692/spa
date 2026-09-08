@@ -195,8 +195,8 @@ const HRManagement: React.FC<HRManagementProps> = ({
   };
 
   // Handlers for Attendance
-  const handleToggleAttendanceDay = (staffId: string, day: number) => {
-    let rec = attendanceList.find(a => a.staffId === staffId && a.month === selectedMonth && a.year === selectedYear);
+  const handleToggleAttendanceDay = (staffId: string, day: number, month = selectedMonth, year = selectedYear) => {
+    let rec = attendanceList.find(a => a.staffId === staffId && a.month === month && a.year === year);
     const statuses: DayAttendanceStatus[] = ['P', 'N', 'CP', 'KP', 'OFF', 'OT'];
     
     const currentDays = rec ? { ...rec.days } : {};
@@ -222,10 +222,10 @@ const HRManagement: React.FC<HRManagementProps> = ({
     });
 
     const updatedRecord: AttendanceRecord = {
-      id: rec?.id || `att-${staffId}-${selectedYear}-${selectedMonth}`,
+      id: rec?.id || `att-${staffId}-${year}-${month}`,
       staffId,
-      month: selectedMonth,
-      year: selectedYear,
+      month,
+      year,
       days: currentDays,
       totalWorkDays: workDays,
       leaveDays: leave,
@@ -1344,19 +1344,21 @@ const HRManagement: React.FC<HRManagementProps> = ({
         </div>
       )}
       {/* MODAL 4: Staff Daily Detail Modal (Real-time day-by-day earnings, tours, commissions) */}
-      <StaffDailyDetailModal
-        isOpen={isDailyDetailOpen}
-        onClose={() => {
-          setIsDailyDetailOpen(false);
-          setDailyDetailStaff(null);
-        }}
-        staff={dailyDetailStaff}
-        initialMonth={selectedMonth}
-        initialYear={selectedYear}
-        attendanceRecord={attendanceList.find(a => a.staffId === dailyDetailStaff?.id && a.month === selectedMonth && a.year === selectedYear)}
-        allTours={toursList}
-        onToggleDayAttendance={handleToggleAttendanceDay}
-      />
+      {isDailyDetailOpen && dailyDetailStaff && (
+        <StaffDailyDetailModal
+          isOpen={isDailyDetailOpen}
+          onClose={() => {
+            setIsDailyDetailOpen(false);
+            setDailyDetailStaff(null);
+          }}
+          staff={dailyDetailStaff}
+          initialMonth={selectedMonth}
+          initialYear={selectedYear}
+          attendanceList={attendanceList}
+          allTours={toursList || []}
+          onToggleDayAttendance={handleToggleAttendanceDay}
+        />
+      )}
     </div>
   );
 };

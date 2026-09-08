@@ -9,9 +9,9 @@ interface StaffDailyDetailModalProps {
   staff: StaffMember | null;
   initialMonth: number;
   initialYear: number;
-  attendanceRecord?: AttendanceRecord;
+  attendanceList?: AttendanceRecord[];
   allTours: TechnicianTour[];
-  onToggleDayAttendance?: (staffId: string, day: number) => void;
+  onToggleDayAttendance?: (staffId: string, day: number, month?: number, year?: number) => void;
 }
 
 const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
@@ -20,40 +20,56 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
   staff,
   initialMonth,
   initialYear,
-  attendanceRecord,
-  allTours,
+  attendanceList = [],
+  allTours = [],
   onToggleDayAttendance
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState<number>(initialMonth);
-  const [selectedYear, setSelectedYear] = useState<number>(initialYear);
+  // Always invoke hooks at the top level unconditionally
+  const [selectedMonth, setSelectedMonth] = useState<number>(initialMonth || new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(initialYear || new Date().getFullYear());
   const [filterMode, setFilterMode] = useState<'all' | 'worked' | 'has_tour'>('all');
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
 
-  if (!isOpen || !staff) return null;
+  // Safely find attendance record for this staff and selected month/year
+  const currentAttendance = useMemo(() => {
+    if (!staff) return null;
+    return attendanceList.find(
+      a => a.staffId === staff.id && a.month === selectedMonth && a.year === selectedYear
+    ) || null;
+  }, [attendanceList, staff?.id, selectedMonth, selectedYear]);
 
-  const seniority = calculateSeniority(staff.joinDate, staff.resignedDate);
+  // Seniority calculation
+  const seniority = useMemo(() => {
+    if (!staff) return null;
+    return calculateSeniority(staff.joinDate || '2024-01-01', staff.resignedDate);
+  }, [staff?.joinDate, staff?.resignedDate]);
 
-  // Number of days in selected month
-  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+  // Days in selected month
+  const daysInMonth = useMemo(() => {
+    return new Date(selectedYear, selectedMonth, 0).getDate();
+  }, [selectedYear, selectedMonth]);
+
   const standardWorkDays = 26;
-  const baseSalary = staff.baseSalary || 0;
+  const baseSalary = staff?.baseSalary || 0;
   const standardDailySalary = Math.round(baseSalary / standardWorkDays);
-
-  // Days record for this staff and this month
-  const daysAttendance = attendanceRecord?.days || {};
 
   // Filter tours for this staff in selected month and year
   const staffMonthTours = useMemo(() => {
+    if (!staff || !Array.isArray(allTours)) return [];
     return allTours.filter(t => {
-      if (t.technicianId !== staff.id) return false;
+      if (!t || t.technicianId !== staff.id || !t.date) return false;
       const tDate = new Date(t.date);
+      if (isNaN(tDate.getTime())) return false;
       return tDate.getMonth() + 1 === selectedMonth && tDate.getFullYear() === selectedYear;
     });
-  }, [allTours, staff.id, selectedMonth, selectedYear]);
+  }, [allTours, staff?.id, selectedMonth, selectedYear]);
 
   // Compute day by day breakdown
   const dailyBreakdown = useMemo(() => {
+    if (!staff) return [];
+
     const list = [];
+    const daysAttendance = currentAttendance?.days || {};
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -77,10 +93,19 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
       const earnedSalary = Math.round(standardDailySalary * workFactor);
 
       // Tours on this day
-      const dayTours = staffMonthTours.filter(t => t.date === dateStr);
+      const dayTours = staffMonthTours.filter(t => {
+        if (!t.date) return false;
+        if (t.date === dateStr) return true;
+        const d = new Date(t.date);
+        return !isNaN(d.getTime()) && 
+               d.getFullYear() === selectedYear && 
+               d.getMonth() + 1 === selectedMonth && 
+               d.getDate() === day;
+      });
+
       const tourCount = dayTours.length;
-      const tourCommission = dayTours.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
-      const tipAmount = dayTours.reduce((sum, t) => sum + (t.tipAmount || 0), 0);
+      const tourCommission = dayTours.reduce((sum, t) => sum + (Number(t.commissionAmount) || 0), 0);
+      const tipAmount = dayTours.reduce((sum, t) => sum + (Number(t.tipAmount) || 0), 0);
       const totalDayIncome = earnedSalary + tourCommission + tipAmount;
 
       list.push({
@@ -100,22 +125,29 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
     }
 
     return list;
-  }, [daysInMonth, selectedMonth, selectedYear, daysAttendance, staffMonthTours, standardDailySalary]);
+  }, [staff, daysInMonth, selectedMonth, selectedYear, currentAttendance, staffMonthTours, standardDailySalary]);
 
   // Totals for the month
-  const totalWorkDays = dailyBreakdown.reduce((sum, d) => sum + d.workFactor, 0);
-  const totalEarnedSalary = dailyBreakdown.reduce((sum, d) => sum + d.earnedSalary, 0);
-  const totalTourCount = dailyBreakdown.reduce((sum, d) => sum + d.tourCount, 0);
-  const totalTourCommission = dailyBreakdown.reduce((sum, d) => sum + d.tourCommission, 0);
-  const totalTip = dailyBreakdown.reduce((sum, d) => sum + d.tipAmount, 0);
+  const totalWorkDays = useMemo(() => dailyBreakdown.reduce((sum, d) => sum + d.workFactor, 0), [dailyBreakdown]);
+  const totalEarnedSalary = useMemo(() => dailyBreakdown.reduce((sum, d) => sum + d.earnedSalary, 0), [dailyBreakdown]);
+  const totalTourCount = useMemo(() => dailyBreakdown.reduce((sum, d) => sum + d.tourCount, 0), [dailyBreakdown]);
+  const totalTourCommission = useMemo(() => dailyBreakdown.reduce((sum, d) => sum + d.tourCommission, 0), [dailyBreakdown]);
+  const totalTip = useMemo(() => dailyBreakdown.reduce((sum, d) => sum + d.tipAmount, 0), [dailyBreakdown]);
   const totalIncome = totalEarnedSalary + totalTourCommission + totalTip;
 
   // Filtered rows
-  const visibleRows = dailyBreakdown.filter(row => {
-    if (filterMode === 'worked') return row.workFactor > 0 || row.tourCount > 0;
-    if (filterMode === 'has_tour') return row.tourCount > 0;
-    return true;
-  });
+  const visibleRows = useMemo(() => {
+    return dailyBreakdown.filter(row => {
+      if (filterMode === 'worked') return row.workFactor > 0 || row.tourCount > 0;
+      if (filterMode === 'has_tour') return row.tourCount > 0;
+      return true;
+    });
+  }, [dailyBreakdown, filterMode]);
+
+  // Guard only AFTER all hooks are called
+  if (!isOpen || !staff) {
+    return null;
+  }
 
   const getStatusBadge = (status: DayAttendanceStatus) => {
     switch (status) {
@@ -140,10 +172,11 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={`Chi Tiết Ngày Công, Tour & Thu Nhập: ${staff.name} (${staff.code})`}
+      maxWidth="max-w-6xl"
     >
       <div className="space-y-4 text-[#5C3A3A]">
         {/* Top Profile Banner */}
-        <div className="bg-gradient-to-r from-pink-50/80 to-[#FDF7F8] p-4 rounded-xl border border-pink-200/70 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div className="bg-gradient-to-r from-pink-50/90 to-[#FDF7F8] p-4 rounded-xl border border-pink-200/70 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-2xs">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold bg-[#D97A7D] text-white px-2 py-0.5 rounded">
@@ -160,27 +193,31 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
               Chức vụ: <strong>{staff.position}</strong> &bull; Bộ phận: <strong>{staff.department}</strong>
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs">
-              <span className="text-gray-500">Ngày vào làm: <strong>{staff.joinDate}</strong></span>
+              <span className="text-gray-500">Ngày vào làm: <strong>{staff.joinDate || 'Chưa cập nhật'}</strong></span>
               <span className="text-gray-400">|</span>
-              <span className="text-[#D97A7D] font-semibold">Thâm niên: {seniority.displayText} ({seniority.levelBadge})</span>
+              {seniority && (
+                <span className="text-[#D97A7D] font-semibold">
+                  Thâm niên: {seniority.displayText} ({seniority.levelBadge})
+                </span>
+              )}
               <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Lương cơ bản: <strong>{formatVND(staff.baseSalary)}</strong>/tháng</span>
+              <span className="text-gray-700">Lương cơ bản: <strong>{formatVND(staff.baseSalary || 0)}</strong>/tháng</span>
               {staff.isTechnician && (
                 <>
                   <span className="text-gray-400">|</span>
-                  <span className="text-purple-700 font-medium">Định mức tour: <strong>{formatVND(staff.tourRateDefault)}</strong>/tour</span>
+                  <span className="text-purple-700 font-medium">Định mức tour: <strong>{formatVND(staff.tourRateDefault || 0)}</strong>/tour</span>
                 </>
               )}
             </div>
           </div>
 
           {/* Month / Year Selector */}
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-pink-200 shadow-xs self-stretch md:self-auto justify-between md:justify-start">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-pink-200 shadow-2xs self-stretch md:self-auto justify-between md:justify-start">
             <span className="text-xs font-semibold text-gray-600">Kỳ làm việc:</span>
             <select
               value={selectedMonth}
               onChange={e => setSelectedMonth(Number(e.target.value))}
-              className="border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white font-semibold text-gray-800"
+              className="border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white font-semibold text-gray-800 focus:border-[#D97A7D]"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                 <option key={m} value={m}>Tháng {m}</option>
@@ -189,7 +226,7 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
-              className="border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white font-semibold text-gray-800"
+              className="border border-gray-300 rounded px-2 py-1 text-xs outline-none bg-white font-semibold text-gray-800 focus:border-[#D97A7D]"
             >
               {[2024, 2025, 2026, 2027].map(y => (
                 <option key={y} value={y}>Năm {y}</option>
@@ -295,143 +332,151 @@ const StaffDailyDetailModal: React.FC<StaffDailyDetailModalProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {visibleRows.map(row => {
-                const isExpanded = expandedDay === row.day;
-                const hasTours = row.tourCount > 0;
+              {visibleRows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-6 text-center text-gray-400">
+                    Không có ngày nào phù hợp với bộ lọc hiện tại.
+                  </td>
+                </tr>
+              ) : (
+                visibleRows.map(row => {
+                  const isExpanded = expandedDay === row.day;
+                  const hasTours = row.tourCount > 0;
 
-                return (
-                  <React.Fragment key={row.day}>
-                    <tr className={`hover:bg-pink-50/30 transition-colors ${row.isSunday ? 'bg-pink-50/20' : ''}`}>
-                      {/* Date and Day of Week */}
-                      <td className="p-2.5 font-medium whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                            row.isSunday ? 'bg-pink-100 text-[#D97A7D]' : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {row.day}
-                          </span>
-                          <div>
-                            <span className="font-semibold text-gray-900 block">{row.dateStr}</span>
-                            <span className={`text-[10px] block ${row.isSunday ? 'text-[#D97A7D] font-bold' : 'text-gray-400'}`}>
-                              {row.dayName}
+                  return (
+                    <React.Fragment key={row.day}>
+                      <tr className={`hover:bg-pink-50/30 transition-colors ${row.isSunday ? 'bg-pink-50/20' : ''}`}>
+                        {/* Date and Day of Week */}
+                        <td className="p-2.5 font-medium whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
+                              row.isSunday ? 'bg-pink-100 text-[#D97A7D]' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {row.day}
                             </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Attendance status with click toggle */}
-                      <td className="p-2.5 text-center whitespace-nowrap">
-                        <div
-                          onClick={() => onToggleDayAttendance && onToggleDayAttendance(staff.id, row.day)}
-                          className="cursor-pointer inline-block"
-                          title="Bấm để chuyển đổi trạng thái công ngày này"
-                        >
-                          {getStatusBadge(row.status)}
-                        </div>
-                      </td>
-
-                      {/* Daily Salary */}
-                      <td className="p-2.5 text-right font-medium">
-                        {row.earnedSalary > 0 ? (
-                          <div>
-                            <span className="text-gray-900 font-bold">{formatVND(row.earnedSalary)}</span>
-                            <span className="text-[10px] text-gray-400 block">({row.workFactor} công)</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">0 đ</span>
-                        )}
-                      </td>
-
-                      {/* Tour Count */}
-                      <td className="p-2.5 text-center">
-                        {hasTours ? (
-                          <button
-                            onClick={() => setExpandedDay(isExpanded ? null : row.day)}
-                            className="px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-[#D97A7D] hover:bg-pink-200 transition-colors inline-flex items-center gap-1"
-                            title="Bấm để xem/thu gọn chi tiết tour"
-                          >
-                            <span>✨ {row.tourCount} tour</span>
-                            <span className="text-[10px]">{isExpanded ? '▲' : '▼'}</span>
-                          </button>
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
-                      </td>
-
-                      {/* Tour Summary preview */}
-                      <td className="p-2.5 text-[11px]">
-                        {hasTours ? (
-                          <div className="space-y-1">
-                            {row.dayTours.map((t, idx) => (
-                              <div key={t.id || idx} className="flex items-center justify-between gap-1 text-gray-700 bg-white/70 px-1.5 py-0.5 rounded border border-gray-100">
-                                <span className="truncate max-w-[140px] font-medium text-gray-800" title={t.serviceName}>
-                                  {t.serviceName}
-                                </span>
-                                <span className="text-[10px] text-[#D97A7D] font-bold shrink-0">
-                                  +{formatVND(t.commissionAmount)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic text-[11px]">Không có tour</span>
-                        )}
-                      </td>
-
-                      {/* Tour Commission */}
-                      <td className="p-2.5 text-right font-bold text-emerald-700 whitespace-nowrap">
-                        {row.tourCommission > 0 ? `+${formatVND(row.tourCommission)}` : '-'}
-                      </td>
-
-                      {/* Tip Amount */}
-                      <td className="p-2.5 text-right font-medium text-purple-700 whitespace-nowrap">
-                        {row.tipAmount > 0 ? `+${formatVND(row.tipAmount)}` : '-'}
-                      </td>
-
-                      {/* Total Day Income */}
-                      <td className="p-2.5 text-right font-bold text-[#D97A7D] bg-pink-50/40 whitespace-nowrap font-serif">
-                        {formatVND(row.totalDayIncome)}
-                      </td>
-                    </tr>
-
-                    {/* Expandable row for full tour details */}
-                    {isExpanded && hasTours && (
-                      <tr className="bg-pink-50/60 border-l-4 border-l-[#D97A7D]">
-                        <td colSpan={8} className="p-3 text-xs">
-                          <div className="bg-white p-3 rounded-lg border border-pink-200 shadow-2xs space-y-2">
-                            <h5 className="font-bold text-xs text-[#5C3A3A] flex items-center justify-between">
-                              <span>Danh sách các Tour dịch vụ KTV đã làm ngày {row.dateStr}:</span>
-                              <span className="text-[#D97A7D]">Tổng: {row.tourCount} tour &bull; Hoa hồng: {formatVND(row.tourCommission)}</span>
-                            </h5>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {row.dayTours.map((t, idx) => (
-                                <div key={t.id || idx} className="p-2.5 rounded-lg border border-gray-100 bg-gray-50/60 text-[11px] space-y-1">
-                                  <div className="flex justify-between items-start">
-                                    <span className="font-bold text-gray-900">{t.serviceName}</span>
-                                    <span className="font-bold text-[#D97A7D] bg-pink-50 px-1.5 py-0.5 rounded border border-pink-100">
-                                      +{formatVND(t.commissionAmount)}
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-2 text-gray-600">
-                                    <span>Thời gian: <strong>{t.time || 'N/A'} ({t.durationMinutes}p)</strong></span>
-                                    <span>Phòng: <strong>{t.room || 'Phòng Spa'}</strong></span>
-                                    <span>Khách: <strong>{t.customerName || 'Khách vãng lai'}</strong></span>
-                                    <span>Tip: <strong className="text-purple-700">{t.tipAmount ? formatVND(t.tipAmount) : '0 đ'}</strong></span>
-                                  </div>
-                                  {t.note && (
-                                    <p className="text-[10px] text-gray-500 italic mt-0.5">Ghi chú: {t.note}</p>
-                                  )}
-                                </div>
-                              ))}
+                            <div>
+                              <span className="font-semibold text-gray-900 block">{row.dateStr}</span>
+                              <span className={`text-[10px] block ${row.isSunday ? 'text-[#D97A7D] font-bold' : 'text-gray-400'}`}>
+                                {row.dayName}
+                              </span>
                             </div>
                           </div>
                         </td>
+
+                        {/* Attendance status with click toggle */}
+                        <td className="p-2.5 text-center whitespace-nowrap">
+                          <div
+                            onClick={() => onToggleDayAttendance && onToggleDayAttendance(staff.id, row.day, selectedMonth, selectedYear)}
+                            className="cursor-pointer inline-block hover:scale-105 transition-transform"
+                            title="Bấm để chuyển đổi trạng thái công ngày này"
+                          >
+                            {getStatusBadge(row.status)}
+                          </div>
+                        </td>
+
+                        {/* Daily Salary */}
+                        <td className="p-2.5 text-right font-medium">
+                          {row.earnedSalary > 0 ? (
+                            <div>
+                              <span className="text-gray-900 font-bold">{formatVND(row.earnedSalary)}</span>
+                              <span className="text-[10px] text-gray-400 block">({row.workFactor} công)</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">0 đ</span>
+                          )}
+                        </td>
+
+                        {/* Tour Count */}
+                        <td className="p-2.5 text-center">
+                          {hasTours ? (
+                            <button
+                              onClick={() => setExpandedDay(isExpanded ? null : row.day)}
+                              className="px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-[#D97A7D] hover:bg-pink-200 transition-colors inline-flex items-center gap-1"
+                              title="Bấm để xem/thu gọn chi tiết tour"
+                            >
+                              <span>✨ {row.tourCount} tour</span>
+                              <span className="text-[10px]">{isExpanded ? '▲' : '▼'}</span>
+                            </button>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </td>
+
+                        {/* Tour Summary preview */}
+                        <td className="p-2.5 text-[11px]">
+                          {hasTours ? (
+                            <div className="space-y-1">
+                              {row.dayTours.map((t, idx) => (
+                                <div key={t.id || idx} className="flex items-center justify-between gap-1 text-gray-700 bg-white/70 px-1.5 py-0.5 rounded border border-gray-100">
+                                  <span className="truncate max-w-[140px] font-medium text-gray-800" title={t.serviceName}>
+                                    {t.serviceName}
+                                  </span>
+                                  <span className="text-[10px] text-[#D97A7D] font-bold shrink-0">
+                                    +{formatVND(Number(t.commissionAmount) || 0)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic text-[11px]">Không có tour</span>
+                          )}
+                        </td>
+
+                        {/* Tour Commission */}
+                        <td className="p-2.5 text-right font-bold text-emerald-700 whitespace-nowrap">
+                          {row.tourCommission > 0 ? `+${formatVND(row.tourCommission)}` : '-'}
+                        </td>
+
+                        {/* Tip Amount */}
+                        <td className="p-2.5 text-right font-medium text-purple-700 whitespace-nowrap">
+                          {row.tipAmount > 0 ? `+${formatVND(row.tipAmount)}` : '-'}
+                        </td>
+
+                        {/* Total Day Income */}
+                        <td className="p-2.5 text-right font-bold text-[#D97A7D] bg-pink-50/40 whitespace-nowrap font-serif">
+                          {formatVND(row.totalDayIncome)}
+                        </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+
+                      {/* Expandable row for full tour details */}
+                      {isExpanded && hasTours && (
+                        <tr className="bg-pink-50/60 border-l-4 border-l-[#D97A7D]">
+                          <td colSpan={8} className="p-3 text-xs">
+                            <div className="bg-white p-3 rounded-lg border border-pink-200 shadow-2xs space-y-2">
+                              <h5 className="font-bold text-xs text-[#5C3A3A] flex items-center justify-between">
+                                <span>Danh sách các Tour dịch vụ KTV đã làm ngày {row.dateStr}:</span>
+                                <span className="text-[#D97A7D]">Tổng: {row.tourCount} tour &bull; Hoa hồng: {formatVND(row.tourCommission)}</span>
+                              </h5>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {row.dayTours.map((t, idx) => (
+                                  <div key={t.id || idx} className="p-2.5 rounded-lg border border-gray-100 bg-gray-50/60 text-[11px] space-y-1">
+                                    <div className="flex justify-between items-start">
+                                      <span className="font-bold text-gray-900">{t.serviceName}</span>
+                                      <span className="font-bold text-[#D97A7D] bg-pink-50 px-1.5 py-0.5 rounded border border-pink-100">
+                                        +{formatVND(Number(t.commissionAmount) || 0)}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 text-gray-600">
+                                      <span>Thời gian: <strong>{t.time || 'N/A'} ({t.durationMinutes}p)</strong></span>
+                                      <span>Phòng: <strong>{t.room || 'Phòng Spa'}</strong></span>
+                                      <span>Khách: <strong>{t.customerName || 'Khách vãng lai'}</strong></span>
+                                      <span>Tip: <strong className="text-purple-700">{t.tipAmount ? formatVND(Number(t.tipAmount)) : '0 đ'}</strong></span>
+                                    </div>
+                                    {t.note && (
+                                      <p className="text-[10px] text-gray-500 italic mt-0.5">Ghi chú: {t.note}</p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
             </tbody>
 
             {/* Total Footer */}
