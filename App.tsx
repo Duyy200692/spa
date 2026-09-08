@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-// FIX: Import directly from firebase SDK for real connection
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs, writeBatch, query, addDoc, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
@@ -11,218 +10,302 @@ import UserManagement from './components/UserManagement';
 import LandingPage from './components/LandingPage';
 import InventoryManagement from './components/InventoryManagement';
 import { User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem } from './types';
-// FIX: Ensure DEFAULT_PROMOTIONS is used
-import { USERS as DEFAULT_USERS, SERVICES as DEFAULT_SERVICES, PROMOTIONS as DEFAULT_PROMOTIONS, INVENTORY_ITEMS as DEFAULT_INVENTORY, SPA_SERVICES_DATA } from './constants';
+import { 
+  USERS as DEFAULT_USERS, 
+  SERVICES as DEFAULT_SERVICES, 
+  PROMOTIONS as DEFAULT_PROMOTIONS, 
+  INVENTORY_ITEMS as DEFAULT_INVENTORY, 
+  SPA_SERVICES_DATA 
+} from './constants';
+import { 
+  getInitialAppData, 
+  persistAppData, 
+  testFirestoreConnection, 
+  handleFirestoreError, 
+  OperationType 
+} from './storageService';
 
 type View = 'dashboard' | 'services' | 'users' | 'inventory';
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>([]);
-  
-  // Audit State
-  const [auditSessions, setAuditSessions] = useState<AuditSession[]>([]);
+
+  // Initialize with local cache or fallback constants
+  const initialData = useMemo(() => getInitialAppData(), []);
+  const [users, setUsers] = useState<User[]>(initialData.users);
+  const [services, setServices] = useState<Service[]>(initialData.services);
+  const [promotions, setPromotions] = useState<Promotion[]>(initialData.promotions);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialData.inventory);
+  const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>(initialData.transactions);
+  const [auditSessions, setAuditSessions] = useState<AuditSession[]>(initialData.audits);
   
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [view, setView] = useState<View>('dashboard');
   const [isLoading, setIsLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
-  
+  const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
+
   // Helper for batch seeding Spa Services
   const seedSpaServicesBatch = async () => {
-      console.log("Starting Spa Services Seed...");
-      try {
-          // 1. Get existing services to avoid duplicates
-          const servicesSnap = await getDocs(collection(db, 'services'));
-          const existingNames = new Set(servicesSnap.docs.map(doc => doc.data().name));
-          
-          const batch = writeBatch(db);
-          let count = 0;
-
-          SPA_SERVICES_DATA.forEach(service => {
-             if (!existingNames.has(service.name)) {
-                 const newId = `service-spa-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-                 const docRef = doc(db, 'services', newId);
-                 
-                 // Construct full Service object with defaults
-                 const fullService = {
-                    id: newId,
-                    name: service.name || 'Unnamed',
-                    description: service.description || '',
-                    category: service.category || 'Spa',
-                    type: 'spa', // Force type
-                    consultationNote: service.consultationNote || '',
-                    priceOriginal: service.priceOriginal || 0,
-                    discountPercent: 0,
-                    pricePromo: 0,
-                    pricePackage5: 0,
-                    pricePackage15: 0,
-                    pricePackage3: 0,
-                    pricePackage5Sessions: 0,
-                    pricePackage10: 0,
-                    pricePackage20: 0,
-                    
-                    // Spa Pricing
-                    price30: service.price30 || 0,
-                    price60: service.price60 || 0,
-                    price90: service.price90 || 0,
-                    price120: service.price120 || 0,
-                 };
-                 
-                 batch.set(docRef, fullService);
-                 count++;
-             }
-          });
-
-          if (count > 0) {
-              await batch.commit();
-              console.log(`Successfully seeded ${count} new Spa services.`);
-          } else {
-              console.log("All Spa services already exist. Skipping seed.");
+    try {
+      if (!isCloudConnected) {
+        // Local mode batch seed
+        const existingNames = new Set(services.map(s => s.name));
+        const newServices: Service[] = [];
+        SPA_SERVICES_DATA.forEach(service => {
+          if (service.name && !existingNames.has(service.name)) {
+            const newId = `service-spa-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+            newServices.push({
+              id: newId,
+              name: service.name || 'Unnamed',
+              description: service.description || '',
+              category: service.category || 'Spa',
+              type: 'spa',
+              consultationNote: service.consultationNote || '',
+              priceOriginal: service.priceOriginal || 0,
+              discountPercent: 0,
+              pricePromo: 0,
+              pricePackage5: 0,
+              pricePackage15: 0,
+              pricePackage3: 0,
+              pricePackage5Sessions: 0,
+              pricePackage10: 0,
+              pricePackage20: 0,
+              price30: service.price30 || 0,
+              price60: service.price60 || 0,
+              price90: service.price90 || 0,
+              price120: service.price120 || 0,
+            });
           }
-          return count;
-      } catch (error) {
-          console.error("Error seeding Spa services:", error);
-          throw error;
+        });
+        if (newServices.length > 0) {
+          const updated = [...services, ...newServices].sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+          setServices(updated);
+          persistAppData({ services: updated });
+        }
+        return newServices.length;
       }
+
+      // Cloud mode batch seed
+      const servicesSnap = await getDocs(collection(db, 'services'));
+      const existingNames = new Set(servicesSnap.docs.map(doc => doc.data().name));
+      const batch = writeBatch(db);
+      let count = 0;
+
+      SPA_SERVICES_DATA.forEach(service => {
+        if (service.name && !existingNames.has(service.name)) {
+          const newId = `service-spa-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+          const docRef = doc(db, 'services', newId);
+          const fullService = {
+            id: newId,
+            name: service.name || 'Unnamed',
+            description: service.description || '',
+            category: service.category || 'Spa',
+            type: 'spa',
+            consultationNote: service.consultationNote || '',
+            priceOriginal: service.priceOriginal || 0,
+            discountPercent: 0,
+            pricePromo: 0,
+            pricePackage5: 0,
+            pricePackage15: 0,
+            pricePackage3: 0,
+            pricePackage5Sessions: 0,
+            pricePackage10: 0,
+            pricePackage20: 0,
+            price30: service.price30 || 0,
+            price60: service.price60 || 0,
+            price90: service.price90 || 0,
+            price120: service.price120 || 0,
+          };
+          batch.set(docRef, fullService);
+          count++;
+        }
+      });
+
+      if (count > 0) {
+        await batch.commit();
+      }
+      return count;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'services');
+      return 0;
+    }
   };
 
-  // --- Firebase Real-time Listener ---
+  // --- Real-time Listeners and Startup Initialization ---
   useEffect(() => {
-    const seedInitialData = async () => {
-        console.log("Checking for initial data...");
-        try {
-            // 1. Check & Seed Users
-            const usersSnap = await getDocs(collection(db, 'users'));
-            if (usersSnap.empty) {
-                console.log("Seeding users...");
-                const batch = writeBatch(db);
-                DEFAULT_USERS.forEach(user => {
-                    const docRef = doc(db, 'users', user.id);
-                    batch.set(docRef, user);
-                });
-                await batch.commit();
-            }
+    let isMounted = true;
+    let unsubscribes: (() => void)[] = [];
 
-            // 2. Check & Seed Services (Generic)
-            const servicesSnap = await getDocs(collection(db, 'services'));
-            if (servicesSnap.empty) {
-                console.log("Seeding services...");
-                const batch = writeBatch(db);
-                DEFAULT_SERVICES.forEach(service => {
-                    const docRef = doc(db, 'services', service.id);
-                    batch.set(docRef, service);
-                });
-                await batch.commit();
-            }
-
-            // 2b. Check & Seed Spa Services (Specific Check)
-            // Modified Logic: If we have fewer than 10 spa services, we attempt to seed the rest.
-            // This handles cases where user might have created 1 manual service, preventing the previous .empty check from running.
-            const spaQuery = query(collection(db, 'services'), where('type', '==', 'spa'));
-            const spaSnap = await getDocs(spaQuery);
-            if (spaSnap.size < 10) {
-                console.log("Spa services seem incomplete (count < 10). Attempting to seed defaults...");
-                const count = await seedSpaServicesBatch();
-                if (count > 0) {
-                    // Alert user so they know data has been added
-                    alert(`Đã tự động cập nhật ${count} dịch vụ Spa mới vào hệ thống! Vui lòng kiểm tra tab "Spa & Massage".`);
-                }
-            }
-
-             // 3. Check & Seed Promotions (FIX: Using DEFAULT_PROMOTIONS here to avoid TS6133)
-            const promotionsSnap = await getDocs(collection(db, 'promotions'));
-            if (promotionsSnap.empty) {
-                console.log("Seeding promotions...");
-                const batch = writeBatch(db);
-                DEFAULT_PROMOTIONS.forEach(promo => {
-                    const docRef = doc(db, 'promotions', promo.id);
-                    batch.set(docRef, promo);
-                });
-                await batch.commit();
-            }
-
-            // 4. Check & Seed Inventory
-            const inventorySnap = await getDocs(collection(db, 'inventory'));
-            if (inventorySnap.empty) {
-                console.log("Seeding inventory...");
-                const batch = writeBatch(db);
-                DEFAULT_INVENTORY.forEach(item => {
-                    const docRef = doc(db, 'inventory', item.id);
-                    // Init batch for seeded items if expiry exists
-                    if (item.expiryDate) {
-                        item.batches = [{ expiryDate: item.expiryDate, quantity: item.quantity }];
-                    }
-                    batch.set(docRef, item);
-                });
-                await batch.commit();
-            }
-
-        } catch (err) {
-            console.error("Error seeding data:", err);
+    const seedCloudData = async () => {
+      try {
+        // 1. Check & Seed Users
+        const usersSnap = await getDocs(collection(db, 'users'));
+        if (usersSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_USERS.forEach(user => {
+            const docRef = doc(db, 'users', user.id);
+            batch.set(docRef, user);
+          });
+          await batch.commit();
         }
+
+        // 2. Check & Seed Services
+        const servicesSnap = await getDocs(collection(db, 'services'));
+        if (servicesSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_SERVICES.forEach(service => {
+            const docRef = doc(db, 'services', service.id);
+            batch.set(docRef, service);
+          });
+          await batch.commit();
+        }
+
+        // 2b. Check & Seed Spa Services
+        const spaQuery = query(collection(db, 'services'), where('type', '==', 'spa'));
+        const spaSnap = await getDocs(spaQuery);
+        if (spaSnap.size < 10) {
+          await seedSpaServicesBatch();
+        }
+
+        // 3. Check & Seed Promotions
+        const promotionsSnap = await getDocs(collection(db, 'promotions'));
+        if (promotionsSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_PROMOTIONS.forEach(promo => {
+            const docRef = doc(db, 'promotions', promo.id);
+            batch.set(docRef, promo);
+          });
+          await batch.commit();
+        }
+
+        // 4. Check & Seed Inventory
+        const inventorySnap = await getDocs(collection(db, 'inventory'));
+        if (inventorySnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_INVENTORY.forEach(item => {
+            const docRef = doc(db, 'inventory', item.id);
+            const copy = { ...item };
+            if (copy.expiryDate) {
+              copy.batches = [{ expiryDate: copy.expiryDate, quantity: copy.quantity }];
+            }
+            batch.set(docRef, copy);
+          });
+          await batch.commit();
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, 'seed');
+      }
     };
 
-    const setupListeners = () => {
-        // Listeners for all collections
-        const unsubUsers = onSnapshot(query(collection(db, "users")), (snapshot) => {
-            const loadedUsers = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
-            setUsers(loadedUsers);
-        });
+    const setupListeners = (): (() => void)[] => {
+      const cleanups: (() => void)[] = [];
 
-        const unsubServices = onSnapshot(query(collection(db, "services")), (snapshot) => {
-            const loadedServices = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Service));
-            setServices(loadedServices.sort((a, b) => (a.category || '').localeCompare(b.category || '')));
-        });
+      try {
+        const unsubUsers = onSnapshot(
+          query(collection(db, 'users')),
+          (snapshot) => {
+            const loadedUsers = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as User));
+            if (loadedUsers.length > 0) {
+              setUsers(loadedUsers);
+              persistAppData({ users: loadedUsers });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'users')
+        );
+        cleanups.push(unsubUsers);
 
-        const unsubPromotions = onSnapshot(query(collection(db, "promotions")), (snapshot) => {
-            const loadedPromotions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Promotion));
+        const unsubServices = onSnapshot(
+          query(collection(db, 'services')),
+          (snapshot) => {
+            const loadedServices = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Service));
+            if (loadedServices.length > 0) {
+              const sorted = loadedServices.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+              setServices(sorted);
+              persistAppData({ services: sorted });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'services')
+        );
+        cleanups.push(unsubServices);
+
+        const unsubPromotions = onSnapshot(
+          query(collection(db, 'promotions')),
+          (snapshot) => {
+            const loadedPromotions = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Promotion));
             setPromotions(loadedPromotions);
-        });
+            persistAppData({ promotions: loadedPromotions });
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'promotions')
+        );
+        cleanups.push(unsubPromotions);
 
-        const unsubInventory = onSnapshot(query(collection(db, "inventory")), (snapshot) => {
-            const loadedItems = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as InventoryItem));
+        const unsubInventory = onSnapshot(
+          query(collection(db, 'inventory')),
+          (snapshot) => {
+            const loadedItems = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as InventoryItem));
             setInventoryItems(loadedItems);
-        });
+            persistAppData({ inventory: loadedItems });
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'inventory')
+        );
+        cleanups.push(unsubInventory);
 
-        const unsubTransactions = onSnapshot(query(collection(db, "inventory_transactions")), (snapshot) => {
-            const loadedTrans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as InventoryTransaction));
+        const unsubTransactions = onSnapshot(
+          query(collection(db, 'inventory_transactions')),
+          (snapshot) => {
+            const loadedTrans = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as InventoryTransaction));
             setInventoryTransactions(loadedTrans);
-        });
+            persistAppData({ transactions: loadedTrans });
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'inventory_transactions')
+        );
+        cleanups.push(unsubTransactions);
 
-        // Audit Listener
-        const unsubAudits = onSnapshot(query(collection(db, "audit_sessions")), (snapshot) => {
-            const loadedAudits = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditSession));
+        const unsubAudits = onSnapshot(
+          query(collection(db, 'audit_sessions')),
+          (snapshot) => {
+            const loadedAudits = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as AuditSession));
             setAuditSessions(loadedAudits);
-        });
-        
-        return () => {
-            unsubUsers();
-            unsubServices();
-            unsubPromotions();
-            unsubInventory();
-            unsubTransactions();
-            unsubAudits();
-        };
+            persistAppData({ audits: loadedAudits });
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'audit_sessions')
+        );
+        cleanups.push(unsubAudits);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, 'listeners');
+      }
+
+      return cleanups;
     };
 
-    seedInitialData().then(() => {
-        const unsubscribe = setupListeners();
-        setIsLoading(false);
-        return unsubscribe;
-    }).catch(error => {
-        console.error("Firebase initialization error:", error);
-        alert("Không thể kết nối đến cơ sở dữ liệu. Vui lòng kiểm tra lại cấu hình Firebase và kết nối mạng.");
-        setIsLoading(false);
-    });
+    const initialize = async () => {
+      const connection = await testFirestoreConnection();
+      if (!isMounted) return;
 
+      if (!connection.accessible) {
+        // Permissions not granted on remote project; run gracefully in local persistence mode
+        setIsCloudConnected(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsCloudConnected(true);
+      await seedCloudData();
+      if (!isMounted) return;
+
+      unsubscribes = setupListeners();
+      setIsLoading(false);
+    };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+      unsubscribes.forEach(unsub => unsub && unsub());
+    };
   }, []);
 
-  // ... (Keep existing computed values and auth handlers) ...
   const activePromotions = useMemo(() => {
     const now = new Date();
     return promotions.filter(p => 
@@ -234,339 +317,560 @@ const App: React.FC = () => {
   const proposalPromotions = useMemo(() => {
     const now = new Date();
     return promotions.filter(p => 
-        p.status !== 'Approved' || 
-        new Date(p.endDate) < now
+      p.status !== 'Approved' || 
+      new Date(p.endDate) < now
     );
   }, [promotions]);
 
   const handleLogin = (username: string, password: string) => {
-      const user = users.find(u => u.username === username && u.password === password);
-      if (user) {
-          setLoggedInUser(user);
-          setLoginError('');
-          // Force Accountant to Inventory view
-          if (user.role === Role.Accountant) {
-              setView('inventory');
-          } else {
-              setView('dashboard');
-          }
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+    if (user) {
+      setLoggedInUser(user);
+      setLoginError('');
+      if (user.role === Role.Accountant) {
+        setView('inventory');
       } else {
-         setLoginError('Tên đăng nhập hoặc mật khẩu không đúng.');
+        setView('dashboard');
       }
+    } else {
+      setLoginError('Tên đăng nhập hoặc mật khẩu không đúng.');
+    }
   };
 
   const handleLogout = () => {
-      setLoggedInUser(null);
-      setView('dashboard');
-      setShowLanding(true);
+    setLoggedInUser(null);
+    setView('dashboard');
+    setShowLanding(true);
   };
   
   const handleEnterSystem = () => {
-      setShowLanding(false);
+    setShowLanding(false);
   };
 
-    const handleSwitchRole = (newRole: Role) => {
-      const targetUser = users.find(u => u.role === newRole);
-      if (targetUser) {
-          setLoggedInUser(targetUser);
-          // Role-based redirect
-          if (newRole === Role.Accountant) {
-              setView('inventory');
-          } else if (newRole !== Role.Management && view === 'users') {
-              setView('dashboard');
-          }
-      } else {
-          alert(`Không tìm thấy tài khoản cho vai trò ${newRole}`);
+  const handleSwitchRole = (newRole: Role) => {
+    const targetUser = users.find(u => u.role === newRole);
+    if (targetUser) {
+      setLoggedInUser(targetUser);
+      if (newRole === Role.Accountant) {
+        setView('inventory');
+      } else if (newRole !== Role.Management && view === 'users') {
+        setView('dashboard');
       }
+    } else {
+      alert(`Không tìm thấy tài khoản cho vai trò ${newRole}`);
+    }
   };
 
   const handleUpdateUserName = async (newName: string) => {
     if (loggedInUser) {
-        const userRef = doc(db, 'users', loggedInUser.id);
-        await updateDoc(userRef, { name: newName } as { [key: string]: any });
+      const updatedUser = { ...loggedInUser, name: newName };
+      setLoggedInUser(updatedUser);
+      const updatedUsers = users.map(u => u.id === loggedInUser.id ? updatedUser : u);
+      setUsers(updatedUsers);
+      persistAppData({ users: updatedUsers });
+
+      if (isCloudConnected) {
+        try {
+          const userRef = doc(db, 'users', loggedInUser.id);
+          await updateDoc(userRef, { name: newName });
+        } catch (err) {
+          handleFirestoreError(err, OperationType.UPDATE, `users/${loggedInUser.id}`);
+        }
+      }
     }
   };
 
   // --- Actions ---
   const addUser = async (newUserData: Omit<User, 'id'>) => {
     const newId = `user-${Date.now()}`;
-    const userRef = doc(db, 'users', newId);
-    await setDoc(userRef, { ...newUserData, id: newId });
+    const newUser: User = { ...newUserData, id: newId };
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    persistAppData({ users: updatedUsers });
+
+    if (isCloudConnected) {
+      try {
+        const userRef = doc(db, 'users', newId);
+        await setDoc(userRef, newUser);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `users/${newId}`);
+      }
+    }
   };
   
   const deleteUser = async (userId: string) => {
-      await deleteDoc(doc(db, 'users', userId));
+    const updatedUsers = users.filter(u => u.id !== userId);
+    setUsers(updatedUsers);
+    persistAppData({ users: updatedUsers });
+
+    if (isCloudConnected) {
+      try {
+        await deleteDoc(doc(db, 'users', userId));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, `users/${userId}`);
+      }
+    }
   };
 
   const addPromotion = async (newPromotionData: Omit<Promotion, 'id'>) => {
     const newId = `promo-${Date.now()}`;
-    const promoRef = doc(db, 'promotions', newId);
-    await setDoc(promoRef, { ...newPromotionData, id: newId });
+    const newPromo: Promotion = { ...newPromotionData, id: newId };
+    const updatedPromos = [newPromo, ...promotions];
+    setPromotions(updatedPromos);
+    persistAppData({ promotions: updatedPromos });
+
+    if (isCloudConnected) {
+      try {
+        const promoRef = doc(db, 'promotions', newId);
+        await setDoc(promoRef, newPromo);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `promotions/${newId}`);
+      }
+    }
   };
   
   const updatePromotion = async (updatedPromotion: Promotion) => {
-    const promoRef = doc(db, 'promotions', updatedPromotion.id);
-    await updateDoc(promoRef, { ...updatedPromotion } as { [key: string]: any });
+    const updatedPromos = promotions.map(p => p.id === updatedPromotion.id ? updatedPromotion : p);
+    setPromotions(updatedPromos);
+    persistAppData({ promotions: updatedPromos });
+
+    if (isCloudConnected) {
+      try {
+        const promoRef = doc(db, 'promotions', updatedPromotion.id);
+        await updateDoc(promoRef, { ...updatedPromotion } as any);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, `promotions/${updatedPromotion.id}`);
+      }
+    }
   };
 
   const deletePromotion = async (promotionId: string) => {
-    await deleteDoc(doc(db, 'promotions', promotionId));
+    const updatedPromos = promotions.filter(p => p.id !== promotionId);
+    setPromotions(updatedPromos);
+    persistAppData({ promotions: updatedPromos });
+
+    if (isCloudConnected) {
+      try {
+        await deleteDoc(doc(db, 'promotions', promotionId));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, `promotions/${promotionId}`);
+      }
+    }
   };
 
   const addService = async (newServiceData: Omit<Service, 'id'>) => {
     const newId = `service-${Date.now()}`;
-    const serviceRef = doc(db, 'services', newId);
-    await setDoc(serviceRef, { ...newServiceData, id: newId });
+    const newService: Service = { ...newServiceData, id: newId };
+    const updatedServices = [...services, newService].sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+    setServices(updatedServices);
+    persistAppData({ services: updatedServices });
+
+    if (isCloudConnected) {
+      try {
+        const serviceRef = doc(db, 'services', newId);
+        await setDoc(serviceRef, newService);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `services/${newId}`);
+      }
+    }
   };
   
   const updateService = async (updatedService: Service) => {
-    const serviceRef = doc(db, 'services', updatedService.id);
-    await updateDoc(serviceRef, { ...updatedService } as { [key: string]: any });
+    const updatedServices = services.map(s => s.id === updatedService.id ? updatedService : s);
+    setServices(updatedServices);
+    persistAppData({ services: updatedServices });
+
+    if (isCloudConnected) {
+      try {
+        const serviceRef = doc(db, 'services', updatedService.id);
+        await updateDoc(serviceRef, { ...updatedService } as any);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, `services/${updatedService.id}`);
+      }
+    }
   };
   
   const deleteService = async (serviceId: string) => {
-    await deleteDoc(doc(db, 'services', serviceId));
-  }
+    const updatedServices = services.filter(s => s.id !== serviceId);
+    setServices(updatedServices);
+    persistAppData({ services: updatedServices });
+
+    if (isCloudConnected) {
+      try {
+        await deleteDoc(doc(db, 'services', serviceId));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, `services/${serviceId}`);
+      }
+    }
+  };
   
   const handleForceSeedSpa = async () => {
-      try {
-          const count = await seedSpaServicesBatch();
-          alert(`Đã nạp thành công ${count} dịch vụ Spa mới!`);
-      } catch (e) {
-          alert("Lỗi khi nạp dữ liệu Spa: " + e);
-      }
+    try {
+      const count = await seedSpaServicesBatch();
+      alert(`Đã nạp thành công ${count} dịch vụ Spa mới!`);
+    } catch (e) {
+      alert('Lỗi khi nạp dữ liệu Spa: ' + e);
+    }
   };
 
   // --- Inventory Actions ---
   const importInventoryItem = async (itemId: string, quantity: number, notes?: string, expiryDate?: string) => {
-      if (!loggedInUser) return;
-      const item = inventoryItems.find(i => i.id === itemId);
-      if (!item) return;
+    if (!loggedInUser) return;
+    const item = inventoryItems.find(i => i.id === itemId);
+    if (!item) return;
 
-      const newQty = item.quantity + quantity;
-      const itemRef = doc(db, 'inventory', itemId);
-      
-      const updateData: any = { quantity: newQty };
-      
-      // Batch Logic
-      let updatedBatches = item.batches ? [...item.batches] : [];
-      
-      if (item.expiryDate && updatedBatches.length === 0) {
-          updatedBatches.push({ expiryDate: item.expiryDate, quantity: item.quantity });
-      }
+    const newQty = item.quantity + quantity;
+    let updatedBatches = item.batches ? [...item.batches] : [];
+    
+    if (item.expiryDate && updatedBatches.length === 0) {
+      updatedBatches.push({ expiryDate: item.expiryDate, quantity: item.quantity });
+    }
 
-      // FIX: Use expiryDate if provided (This fixes TS6133)
-      if (expiryDate) {
-          const existingBatchIndex = updatedBatches.findIndex(b => b.expiryDate === expiryDate);
-          if (existingBatchIndex >= 0) {
-              updatedBatches[existingBatchIndex].quantity += quantity;
-          } else {
-              updatedBatches.push({ expiryDate, quantity });
-          }
-          updatedBatches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
-          
-          updateData.batches = updatedBatches;
-          if (updatedBatches.length > 0) {
-              updateData.expiryDate = updatedBatches[0].expiryDate;
-          }
+    let nextExpiry = item.expiryDate;
+    if (expiryDate) {
+      const existingBatchIndex = updatedBatches.findIndex(b => b.expiryDate === expiryDate);
+      if (existingBatchIndex >= 0) {
+        updatedBatches[existingBatchIndex].quantity += quantity;
       } else {
-          // Logic for no expiry provided
+        updatedBatches.push({ expiryDate, quantity });
       }
-      
-      await updateDoc(itemRef, updateData);
+      updatedBatches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+      if (updatedBatches.length > 0) {
+        nextExpiry = updatedBatches[0].expiryDate;
+      }
+    }
 
-      await addDoc(collection(db, 'inventory_transactions'), {
-          itemId,
-          itemName: item.name,
-          type: 'in',
-          quantity,
-          date: new Date().toISOString(),
-          performedBy: loggedInUser.name,
-          performedById: loggedInUser.id,
-          reason: notes || 'Nhập hàng',
-          remainingStock: newQty
-      });
+    const updatedItem: InventoryItem = {
+      ...item,
+      quantity: newQty,
+      batches: updatedBatches,
+      expiryDate: nextExpiry
+    };
+
+    const newTx: InventoryTransaction = {
+      id: `tx-${Date.now()}`,
+      itemId,
+      itemName: item.name,
+      type: 'in',
+      quantity,
+      date: new Date().toISOString(),
+      performedBy: loggedInUser.name,
+      performedById: loggedInUser.id,
+      reason: notes || 'Nhập hàng',
+      remainingStock: newQty
+    };
+
+    const updatedInventory = inventoryItems.map(i => i.id === itemId ? updatedItem : i);
+    const updatedTransactions = [newTx, ...inventoryTransactions];
+    
+    setInventoryItems(updatedInventory);
+    setInventoryTransactions(updatedTransactions);
+    persistAppData({ inventory: updatedInventory, transactions: updatedTransactions });
+
+    if (isCloudConnected) {
+      try {
+        const itemRef = doc(db, 'inventory', itemId);
+        await updateDoc(itemRef, {
+          quantity: newQty,
+          batches: updatedBatches,
+          expiryDate: nextExpiry || null
+        });
+        await addDoc(collection(db, 'inventory_transactions'), newTx);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `inventory/${itemId}`);
+      }
+    }
   };
 
   const exportInventoryItem = async (itemId: string, quantity: number, reason: string) => {
-      if (!loggedInUser) return;
-      const item = inventoryItems.find(i => i.id === itemId);
-      if (!item) return;
+    if (!loggedInUser) return;
+    const item = inventoryItems.find(i => i.id === itemId);
+    if (!item) return;
 
-      const newQty = Math.max(0, item.quantity - quantity);
-      const itemRef = doc(db, 'inventory', itemId);
-      
-      const updateData: any = { quantity: newQty };
+    const newQty = Math.max(0, item.quantity - quantity);
+    let finalBatches = item.batches ? [...item.batches] : [];
+    let nextExpiry = item.expiryDate;
 
-      // FIFO Logic
-      if (item.batches && item.batches.length > 0) {
-          let remainingToDeduct = quantity;
-          const updatedBatches = item.batches.map(b => ({...b}));
-          updatedBatches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+    // FIFO Logic
+    if (finalBatches.length > 0) {
+      let remainingToDeduct = quantity;
+      const sortedBatches = finalBatches.map(b => ({ ...b }))
+        .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
-          for (let i = 0; i < updatedBatches.length; i++) {
-              if (remainingToDeduct <= 0) break;
-              if (updatedBatches[i].quantity >= remainingToDeduct) {
-                  updatedBatches[i].quantity -= remainingToDeduct;
-                  remainingToDeduct = 0;
-              } else {
-                  remainingToDeduct -= updatedBatches[i].quantity;
-                  updatedBatches[i].quantity = 0;
-              }
-          }
-          const finalBatches = updatedBatches.filter(b => b.quantity > 0);
-          updateData.batches = finalBatches;
-          
-          if (finalBatches.length > 0) {
-              updateData.expiryDate = finalBatches[0].expiryDate;
-          } else {
-              updateData.expiryDate = null;
-          }
+      for (let i = 0; i < sortedBatches.length; i++) {
+        if (remainingToDeduct <= 0) break;
+        if (sortedBatches[i].quantity >= remainingToDeduct) {
+          sortedBatches[i].quantity -= remainingToDeduct;
+          remainingToDeduct = 0;
+        } else {
+          remainingToDeduct -= sortedBatches[i].quantity;
+          sortedBatches[i].quantity = 0;
+        }
       }
+      finalBatches = sortedBatches.filter(b => b.quantity > 0);
+      nextExpiry = finalBatches.length > 0 ? finalBatches[0].expiryDate : undefined;
+    }
 
-      await updateDoc(itemRef, updateData);
+    const updatedItem: InventoryItem = {
+      ...item,
+      quantity: newQty,
+      batches: finalBatches,
+      expiryDate: nextExpiry
+    };
 
-      await addDoc(collection(db, 'inventory_transactions'), {
-          itemId,
-          itemName: item.name,
-          type: 'out',
-          quantity,
-          date: new Date().toISOString(),
-          performedBy: loggedInUser.name,
-          performedById: loggedInUser.id,
-          reason: reason,
-          remainingStock: newQty
-      });
+    const newTx: InventoryTransaction = {
+      id: `tx-${Date.now()}`,
+      itemId,
+      itemName: item.name,
+      type: 'out',
+      quantity,
+      date: new Date().toISOString(),
+      performedBy: loggedInUser.name,
+      performedById: loggedInUser.id,
+      reason,
+      remainingStock: newQty
+    };
+
+    const updatedInventory = inventoryItems.map(i => i.id === itemId ? updatedItem : i);
+    const updatedTransactions = [newTx, ...inventoryTransactions];
+
+    setInventoryItems(updatedInventory);
+    setInventoryTransactions(updatedTransactions);
+    persistAppData({ inventory: updatedInventory, transactions: updatedTransactions });
+
+    if (isCloudConnected) {
+      try {
+        const itemRef = doc(db, 'inventory', itemId);
+        await updateDoc(itemRef, {
+          quantity: newQty,
+          batches: finalBatches,
+          expiryDate: nextExpiry || null
+        });
+        await addDoc(collection(db, 'inventory_transactions'), newTx);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `inventory/${itemId}`);
+      }
+    }
   };
 
   const updateInventoryItem = async (item: InventoryItem) => {
-      const itemRef = doc(db, 'inventory', item.id);
-      await updateDoc(itemRef, { ...item } as { [key: string]: any });
+    const updatedInventory = inventoryItems.map(i => i.id === item.id ? item : i);
+    setInventoryItems(updatedInventory);
+    persistAppData({ inventory: updatedInventory });
+
+    if (isCloudConnected) {
+      try {
+        const itemRef = doc(db, 'inventory', item.id);
+        await updateDoc(itemRef, { ...item } as any);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, `inventory/${item.id}`);
+      }
+    }
   };
 
   const handleForceSeedInventory = async () => {
-      try {
-          const batch = writeBatch(db);
-          DEFAULT_INVENTORY.forEach(item => {
-              const docRef = doc(db, 'inventory', item.id);
-              if (item.expiryDate) {
-                  item.batches = [{ expiryDate: item.expiryDate, quantity: item.quantity }];
-              }
-              batch.set(docRef, item);
-          });
-          await batch.commit();
-          alert(`Đã nạp thành công ${DEFAULT_INVENTORY.length} mặt hàng vào kho!`);
-      } catch (e) {
-          console.error(e);
-          alert("Lỗi khi nạp dữ liệu: " + e);
+    try {
+      const updated = [...DEFAULT_INVENTORY];
+      setInventoryItems(updated);
+      persistAppData({ inventory: updated });
+
+      if (isCloudConnected) {
+        const batch = writeBatch(db);
+        DEFAULT_INVENTORY.forEach(item => {
+          const docRef = doc(db, 'inventory', item.id);
+          const copy = { ...item };
+          if (copy.expiryDate) {
+            copy.batches = [{ expiryDate: copy.expiryDate, quantity: copy.quantity }];
+          }
+          batch.set(docRef, copy);
+        });
+        await batch.commit();
       }
+      alert(`Đã nạp thành công ${DEFAULT_INVENTORY.length} mặt hàng vào kho!`);
+    } catch (e) {
+      alert('Lỗi khi nạp dữ liệu: ' + e);
+    }
   };
 
-  // --- NEW: AUDIT LOGIC (CORE) ---
-  
+  // --- Audit Logic ---
   const createAuditSession = async (month: number, year: number) => {
-      if (!loggedInUser) return;
-      const newId = `audit-${year}-${month}-${Date.now()}`;
-      
-      // 1. Snapshot current stock state
-      const items: AuditItem[] = inventoryItems.map(inv => ({
-          itemId: inv.id,
-          itemName: inv.name,
-          systemQty: inv.quantity, // Current system stock
-          actualQty: inv.quantity, // Default actual to system (user will edit this)
-          diff: 0
-      }));
+    if (!loggedInUser) return;
+    const newId = `audit-${year}-${month}-${Date.now()}`;
+    
+    const items: AuditItem[] = inventoryItems.map(inv => ({
+      itemId: inv.id,
+      itemName: inv.name,
+      systemQty: inv.quantity,
+      actualQty: inv.quantity,
+      diff: 0
+    }));
 
-      const newAudit: AuditSession = {
-          id: newId,
-          name: `Kiểm kê Tháng ${month}/${year}`,
-          month,
-          year,
-          status: 'open',
-          createdBy: loggedInUser.name,
-          createdDate: new Date().toISOString(),
-          items
-      };
+    const newAudit: AuditSession = {
+      id: newId,
+      name: `Kiểm kê Tháng ${month}/${year}`,
+      month,
+      year,
+      status: 'open',
+      createdBy: loggedInUser.name,
+      createdDate: new Date().toISOString(),
+      items
+    };
 
-      await setDoc(doc(db, 'audit_sessions', newId), newAudit);
+    const updatedAudits = [newAudit, ...auditSessions];
+    setAuditSessions(updatedAudits);
+    persistAppData({ audits: updatedAudits });
+
+    if (isCloudConnected) {
+      try {
+        await setDoc(doc(db, 'audit_sessions', newId), newAudit);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `audit_sessions/${newId}`);
+      }
+    }
   };
 
   const updateAuditItem = async (auditId: string, itemId: string, actualQty: number, reason: string) => {
-      const session = auditSessions.find(s => s.id === auditId);
-      if (!session) return;
+    const session = auditSessions.find(s => s.id === auditId);
+    if (!session) return;
 
-      const updatedItems = session.items.map(item => {
-          if (item.itemId === itemId) {
-              return { 
-                  ...item, 
-                  actualQty, 
-                  diff: actualQty - item.systemQty, // Recalculate diff
-                  reason 
-              };
-          }
-          return item;
-      });
+    const updatedItems = session.items.map(item => {
+      if (item.itemId === itemId) {
+        return { 
+          ...item, 
+          actualQty, 
+          diff: actualQty - item.systemQty,
+          reason 
+        };
+      }
+      return item;
+    });
 
-      await updateDoc(doc(db, 'audit_sessions', auditId), { items: updatedItems } as any);
+    const updatedSession = { ...session, items: updatedItems };
+    const updatedAudits = auditSessions.map(s => s.id === auditId ? updatedSession : s);
+    setAuditSessions(updatedAudits);
+    persistAppData({ audits: updatedAudits });
+
+    if (isCloudConnected) {
+      try {
+        await updateDoc(doc(db, 'audit_sessions', auditId), { items: updatedItems } as any);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, `audit_sessions/${auditId}`);
+      }
+    }
   };
 
   const finalizeAuditSession = async (auditId: string) => {
-      const session = auditSessions.find(s => s.id === auditId);
-      if (!session) return;
+    const session = auditSessions.find(s => s.id === auditId);
+    if (!session) return;
 
-      const batch = writeBatch(db);
-      const today = new Date().toISOString();
+    const today = new Date().toISOString();
+    const updatedSession: AuditSession = {
+      ...session,
+      status: 'closed',
+      closedDate: today
+    };
 
-      // 1. Close the audit session
-      const auditRef = doc(db, 'audit_sessions', auditId);
-      batch.update(auditRef, { status: 'closed', closedDate: today });
+    // Update inventory counts from audit items
+    let updatedInventory = [...inventoryItems];
+    const newTransactions: InventoryTransaction[] = [];
 
-      // 2. Create Adjustments
-      for (const item of session.items) {
-          if (item.diff !== 0) {
-              // A. Update Inventory Qty
-              const invRef = doc(db, 'inventory', item.itemId);
-              batch.update(invRef, { quantity: item.actualQty }); // Set to actual count
+    for (const item of session.items) {
+      if (item.diff !== 0) {
+        updatedInventory = updatedInventory.map(inv => 
+          inv.id === item.itemId ? { ...inv, quantity: item.actualQty } : inv
+        );
 
-              // B. Create Transaction Record
-              const transRef = doc(collection(db, 'inventory_transactions'));
-              
-              const reasonStr = `Điều chỉnh kiểm kê (${session.name}): ${item.diff > 0 ? '+' : ''}${item.diff}. ${item.reason || ''}`;
-              
-              batch.set(transRef, {
-                  itemId: item.itemId,
-                  itemName: item.itemName,
-                  type: 'audit_adjustment',
-                  quantity: Math.abs(item.diff),
-                  date: today,
-                  performedBy: loggedInUser?.name || 'System',
-                  performedById: loggedInUser?.id || 'system',
-                  reason: reasonStr,
-                  remainingStock: item.actualQty
-              });
-          }
+        const reasonStr = `Điều chỉnh kiểm kê (${session.name}): ${item.diff > 0 ? '+' : ''}${item.diff}. ${item.reason || ''}`;
+        newTransactions.push({
+          id: `tx-audit-${Date.now()}-${item.itemId}`,
+          itemId: item.itemId,
+          itemName: item.itemName,
+          type: 'audit_adjustment',
+          quantity: Math.abs(item.diff),
+          date: today,
+          performedBy: loggedInUser?.name || 'System',
+          performedById: loggedInUser?.id || 'system',
+          reason: reasonStr,
+          remainingStock: item.actualQty
+        });
       }
+    }
 
-      await batch.commit();
-      alert("Đã chốt sổ thành công! Tồn kho đã được cập nhật theo số liệu thực tế.");
+    const updatedAudits = auditSessions.map(s => s.id === auditId ? updatedSession : s);
+    const updatedTransactions = [...newTransactions, ...inventoryTransactions];
+
+    setAuditSessions(updatedAudits);
+    setInventoryItems(updatedInventory);
+    setInventoryTransactions(updatedTransactions);
+    persistAppData({
+      audits: updatedAudits,
+      inventory: updatedInventory,
+      transactions: updatedTransactions
+    });
+
+    if (isCloudConnected) {
+      try {
+        const batch = writeBatch(db);
+        const auditRef = doc(db, 'audit_sessions', auditId);
+        batch.update(auditRef, { status: 'closed', closedDate: today });
+
+        for (const item of session.items) {
+          if (item.diff !== 0) {
+            const invRef = doc(db, 'inventory', item.itemId);
+            batch.update(invRef, { quantity: item.actualQty });
+
+            const transRef = doc(collection(db, 'inventory_transactions'));
+            const reasonStr = `Điều chỉnh kiểm kê (${session.name}): ${item.diff > 0 ? '+' : ''}${item.diff}. ${item.reason || ''}`;
+            batch.set(transRef, {
+              itemId: item.itemId,
+              itemName: item.itemName,
+              type: 'audit_adjustment',
+              quantity: Math.abs(item.diff),
+              date: today,
+              performedBy: loggedInUser?.name || 'System',
+              performedById: loggedInUser?.id || 'system',
+              reason: reasonStr,
+              remainingStock: item.actualQty
+            });
+          }
+        }
+        await batch.commit();
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `audit_sessions/${auditId}`);
+      }
+    }
+
+    alert('Đã chốt sổ thành công! Tồn kho đã được cập nhật theo số liệu thực tế.');
   };
 
-  // FIX: Add deleteAuditSession
   const deleteAuditSession = async (auditId: string) => {
-      await deleteDoc(doc(db, 'audit_sessions', auditId));
+    const updatedAudits = auditSessions.filter(s => s.id !== auditId);
+    setAuditSessions(updatedAudits);
+    persistAppData({ audits: updatedAudits });
+
+    if (isCloudConnected) {
+      try {
+        await deleteDoc(doc(db, 'audit_sessions', auditId));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, `audit_sessions/${auditId}`);
+      }
+    }
   };
 
-  // ... (Render Logic) ...
+  // --- Render ---
   if (isLoading) {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-[#FEFBFB] text-[#5C3A3A]">
-              <p className="font-serif text-xl animate-pulse">Đang kết nối tới cơ sở dữ liệu...</p>
-          </div>
-      );
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FEFBFB] text-[#5C3A3A]">
+        <div className="text-center">
+          <p className="font-serif text-2xl mb-2 text-[#D97A7D]">JUSpa Promotion Manager</p>
+          <p className="text-sm text-gray-500 animate-pulse">Đang tải dữ liệu hệ thống...</p>
+        </div>
+      </div>
+    );
   }
 
   if (showLanding) {
-      return <LandingPage onEnter={handleEnterSystem} />;
+    return <LandingPage onEnter={handleEnterSystem} />;
   }
 
   if (!loggedInUser) {
@@ -582,6 +886,7 @@ const App: React.FC = () => {
         currentView={view}
         onViewChange={setView}
         onLogout={handleLogout}
+        isCloudConnected={isCloudConnected}
       />
       <main className="p-4 sm:p-6 lg:p-8">
         {view === 'dashboard' && loggedInUser.role !== Role.Accountant && (
@@ -608,30 +913,28 @@ const App: React.FC = () => {
         )}
 
         {view === 'inventory' && (
-            <InventoryManagement 
-                items={inventoryItems}
-                transactions={inventoryTransactions}
-                currentUser={loggedInUser}
-                onImportItem={importInventoryItem}
-                onExportItem={exportInventoryItem}
-                onSeedData={handleForceSeedInventory}
-                onUpdateItem={updateInventoryItem}
-                // Pass Audit props
-                auditSessions={auditSessions}
-                onCreateAudit={createAuditSession}
-                onUpdateAuditItem={updateAuditItem}
-                onFinalizeAudit={finalizeAuditSession}
-                // FIX: Pass delete handler
-                onDeleteAudit={deleteAuditSession}
-            />
+          <InventoryManagement 
+            items={inventoryItems}
+            transactions={inventoryTransactions}
+            currentUser={loggedInUser}
+            onImportItem={importInventoryItem}
+            onExportItem={exportInventoryItem}
+            onSeedData={handleForceSeedInventory}
+            onUpdateItem={updateInventoryItem}
+            auditSessions={auditSessions}
+            onCreateAudit={createAuditSession}
+            onUpdateAuditItem={updateAuditItem}
+            onFinalizeAudit={finalizeAuditSession}
+            onDeleteAudit={deleteAuditSession}
+          />
         )}
 
         {view === 'users' && loggedInUser.role === Role.Management && (
-            <UserManagement 
-                users={users}
-                onAddUser={addUser}
-                onDeleteUser={deleteUser}
-            />
+          <UserManagement 
+            users={users}
+            onAddUser={addUser}
+            onDeleteUser={deleteUser}
+          />
         )}
       </main>
     </div>

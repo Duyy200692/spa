@@ -57,6 +57,41 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, error }) => {
           <Button type="submit" className="w-full py-3 text-lg">
             Đăng nhập
           </Button>
+
+          <div className="pt-2 border-t border-pink-100">
+            <p className="text-xs font-semibold text-gray-500 mb-2 text-center">Tài khoản mẫu để truy cập nhanh:</p>
+            <div className="grid grid-cols-2 gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={() => { setUsername('admin'); setPassword('1'); onLogin('admin', '1'); }}
+                className="p-1.5 bg-pink-50 hover:bg-pink-100 text-[#D97A7D] rounded border border-pink-200 text-left transition-colors"
+              >
+                👑 <strong>admin</strong> (Quản lý)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setUsername('ketoan'); setPassword('1'); onLogin('ketoan', '1'); }}
+                className="p-1.5 bg-pink-50 hover:bg-pink-100 text-[#D97A7D] rounded border border-pink-200 text-left transition-colors"
+              >
+                📦 <strong>ketoan</strong> (Kho)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setUsername('mkt'); setPassword('1'); onLogin('mkt', '1'); }}
+                className="p-1.5 bg-pink-50 hover:bg-pink-100 text-[#D97A7D] rounded border border-pink-200 text-left transition-colors"
+              >
+                📢 <strong>mkt</strong> (Marketing)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setUsername('reception'); setPassword('1'); onLogin('reception', '1'); }}
+                className="p-1.5 bg-pink-50 hover:bg-pink-100 text-[#D97A7D] rounded border border-pink-200 text-left transition-colors"
+              >
+                🛎️ <strong>reception</strong> (Lễ tân)
+              </button>
+            </div>
+          </div>
+
           <div className="text-center text-xs text-gray-400 mt-4">
              Hệ thống quản lý nội bộ JUSpa
           </div>

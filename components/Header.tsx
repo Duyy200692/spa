@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import EditUserModal from './EditUserModal';
+import Modal from './shared/Modal';
 
 interface HeaderProps {
   currentUser: User;
@@ -9,6 +10,7 @@ interface HeaderProps {
   currentView: 'dashboard' | 'services' | 'users' | 'inventory';
   onViewChange: (view: 'dashboard' | 'services' | 'users' | 'inventory') => void;
   onLogout: () => void;
+  isCloudConnected?: boolean;
 }
 
 const JuSpaLogo: React.FC = () => (
@@ -18,8 +20,9 @@ const JuSpaLogo: React.FC = () => (
     </div>
 );
 
-const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUserName, currentView, onViewChange, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUserName, currentView, onViewChange, onLogout, isCloudConnected = false }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSyncInfoOpen, setIsSyncInfoOpen] = useState(false);
   
   const navButtonStyle = "px-3 py-1 rounded-md text-sm font-medium transition-colors";
   const activeStyle = "bg-[#E5989B] text-white shadow-sm";
@@ -33,7 +36,24 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
         <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-start">
           <JuSpaLogo />
           <div className="flex flex-col">
-              <h1 className="text-xl md:text-2xl font-light text-[#5C3A3A] hidden md:block">Promotion Manager</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-light text-[#5C3A3A] hidden md:block">Promotion Manager</h1>
+                {isCloudConnected ? (
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Cloud Sync
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setIsSyncInfoOpen(true)}
+                    className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 cursor-pointer transition-colors"
+                    title="Nhấn để xem trạng thái kết nối"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                    Local Mode (Offline)
+                  </button>
+                )}
+              </div>
               <div className="mt-2 flex flex-wrap items-center gap-2 border border-gray-200 p-1 rounded-lg bg-gray-50">
                   {!isAccountant && (
                     <button 
@@ -115,6 +135,53 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
         currentUser={currentUser}
         onUpdateName={onUpdateUserName}
       />
+
+      <Modal
+        isOpen={isSyncInfoOpen}
+        onClose={() => setIsSyncInfoOpen(false)}
+        title="Trạng thái Kết nối & Lưu trữ Dữ liệu"
+      >
+        <div className="space-y-4 text-sm text-gray-600">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
+            <p className="font-semibold mb-1">Đang hoạt động ở Chế độ Lưu trữ Cục bộ (Local Persistence)</p>
+            <p className="text-xs leading-relaxed">
+              Dự án Firebase Firestore hiện tại đang từ chối quyền truy cập (Permission Denied). 
+              Hệ thống đã tự động lưu dữ liệu trên trình duyệt (LocalStorage). Tất cả hoạt động tạo/sửa khuyến mãi, dịch vụ, kho hàng và kiểm kê đều được lưu trữ an toàn.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">Cách kích hoạt đồng bộ Firebase Cloud trực tiếp:</h4>
+            <ol className="list-decimal list-inside space-y-1 text-xs text-gray-600">
+              <li>Truy cập <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-pink-600 underline">Firebase Console</a></li>
+              <li>Chọn dự án của bạn (ví dụ: <code>juspa-manager</code>)</li>
+              <li>Vào <strong>Build &gt; Firestore Database &gt; Rules</strong></li>
+              <li>Sao chép nội dung từ file <code>firestore.rules</code> trong mã nguồn và dán vào đó rồi bấm <strong>Publish</strong>.</li>
+            </ol>
+          </div>
+
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded text-xs font-mono overflow-x-auto">
+            <p className="text-gray-400 mb-1 font-sans font-semibold">// Quy tắc mẫu trong file firestore.rules</p>
+            rules_version = '2';<br/>
+            service cloud.firestore &#123;<br/>
+            &nbsp;&nbsp;match /databases/&#123;database&#125;/documents &#123;<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;match /&#123;document=**&#125; &#123;<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&#125;<br/>
+            &nbsp;&nbsp;&#125;<br/>
+            &#125;
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={() => setIsSyncInfoOpen(false)}
+              className="px-4 py-2 bg-[#E5989B] text-white rounded-md text-sm hover:bg-[#D97A7D] transition-colors"
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

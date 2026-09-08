@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "JUSpa staff and admin accounts with role-based access",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["Product", "Marketing", "Management", "Reception", "Accountant"] },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "required": ["id", "name", "role", "username"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Spa treatments, massage, facial, laser, and combo packages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["single", "combo", "spa"] },
+        "category": { "type": "string" },
+        "priceOriginal": { "type": "number" },
+        "pricePromo": { "type": "number" }
+      },
+      "required": ["id", "name", "priceOriginal"]
+    },
+    "Promotion": {
+      "title": "Promotion",
+      "description": "Promotional campaigns and proposals across spa services",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending Design", "Pending Approval", "Approved", "Rejected"] },
+        "proposerId": { "type": "string" }
+      },
+      "required": ["id", "name", "startDate", "endDate", "status", "proposerId"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Stock items, cosmetics, materials, and consumables",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "unit": { "type": "string" },
+        "quantity": { "type": "number" },
+        "location": { "type": "string" }
+      },
+      "required": ["id", "name", "unit", "quantity", "location"]
+    },
+    "InventoryTransaction": {
+      "title": "InventoryTransaction",
+      "description": "Stock in, stock out, and audit adjustment records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "type": { "type": "string", "enum": ["in", "out", "audit_adjustment"] },
+        "quantity": { "type": "number" },
+        "date": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "performedById": { "type": "string" },
+        "remainingStock": { "type": "number" }
+      },
+      "required": ["itemId", "itemName", "type", "quantity", "date", "performedBy", "remainingStock"]
+    },
+    "AuditSession": {
+      "title": "AuditSession",
+      "description": "Monthly stock audit and physical inventory reconciliation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "month": { "type": "number" },
+        "year": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "createdBy": { "type": "string" },
+        "createdDate": { "type": "string" }
+      },
+      "required": ["id", "name", "month", "year", "status", "createdBy", "createdDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "JUSpa staff user accounts"
+    },
+    "/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Spa catalog services"
+    },
+    "/promotions/{promoId}": {
+      "schema": "Promotion",
+      "description": "Marketing promotion proposals"
+    },
+    "/inventory/{itemId}": {
+      "schema": "InventoryItem",
+      "description": "Warehouse inventory items"
+    },
+    "/inventory_transactions/{transId}": {
+      "schema": "InventoryTransaction",
+      "description": "Warehouse transactions history"
+    },
+    "/audit_sessions/{auditId}": {
+      "schema": "AuditSession",
+      "description": "Inventory auditing sessions"
+    }
+  }
+}
