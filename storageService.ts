@@ -53,6 +53,15 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 const STORAGE_KEYS = {
+  USERS: 'wellness_users_data',
+  SERVICES: 'wellness_services_data',
+  PROMOTIONS: 'wellness_promotions_data',
+  INVENTORY: 'wellness_inventory_data',
+  TRANSACTIONS: 'wellness_transactions_data',
+  AUDITS: 'wellness_audits_data',
+};
+
+const LEGACY_KEYS = {
   USERS: 'juspa_users_data',
   SERVICES: 'juspa_services_data',
   PROMOTIONS: 'juspa_promotions_data',
@@ -62,9 +71,12 @@ const STORAGE_KEYS = {
 };
 
 // Safe Local Storage Helpers
-export function loadLocalData<T>(key: string, defaultValue: T): T {
+export function loadLocalData<T>(key: string, defaultValue: T, legacyKey?: string): T {
   try {
-    const raw = localStorage.getItem(key);
+    let raw = localStorage.getItem(key);
+    if (!raw && legacyKey) {
+      raw = localStorage.getItem(legacyKey);
+    }
     if (!raw) return defaultValue;
     return JSON.parse(raw);
   } catch (err) {
@@ -82,12 +94,12 @@ export function saveLocalData<T>(key: string, value: T): void {
 }
 
 export function getInitialAppData() {
-  const users = loadLocalData<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS);
-  const services = loadLocalData<Service[]>(STORAGE_KEYS.SERVICES, DEFAULT_SERVICES);
-  const promotions = loadLocalData<Promotion[]>(STORAGE_KEYS.PROMOTIONS, DEFAULT_PROMOTIONS);
-  const inventory = loadLocalData<InventoryItem[]>(STORAGE_KEYS.INVENTORY, DEFAULT_INVENTORY);
-  const transactions = loadLocalData<InventoryTransaction[]>(STORAGE_KEYS.TRANSACTIONS, []);
-  const audits = loadLocalData<AuditSession[]>(STORAGE_KEYS.AUDITS, []);
+  const users = loadLocalData<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS, LEGACY_KEYS.USERS);
+  const services = loadLocalData<Service[]>(STORAGE_KEYS.SERVICES, DEFAULT_SERVICES, LEGACY_KEYS.SERVICES);
+  const promotions = loadLocalData<Promotion[]>(STORAGE_KEYS.PROMOTIONS, DEFAULT_PROMOTIONS, LEGACY_KEYS.PROMOTIONS);
+  const inventory = loadLocalData<InventoryItem[]>(STORAGE_KEYS.INVENTORY, DEFAULT_INVENTORY, LEGACY_KEYS.INVENTORY);
+  const transactions = loadLocalData<InventoryTransaction[]>(STORAGE_KEYS.TRANSACTIONS, [], LEGACY_KEYS.TRANSACTIONS);
+  const audits = loadLocalData<AuditSession[]>(STORAGE_KEYS.AUDITS, [], LEGACY_KEYS.AUDITS);
 
   return { users, services, promotions, inventory, transactions, audits };
 }

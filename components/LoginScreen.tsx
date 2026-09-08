@@ -15,9 +15,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, error }) => {
     onLogin(username, password);
   };
 
-  const JuSpaLogoLarge = () => (
+  const WellnessLogoLarge = () => (
     <div className="flex flex-col items-center text-[#E5989B] mb-8">
-        <span className="font-serif font-bold text-5xl tracking-wider mt-2 text-[#D97A7D]">JUSpa</span>
+        <span className="font-serif font-bold text-5xl tracking-wider mt-2 text-[#D97A7D]">Wellness</span>
         <span className="text-gray-500 font-light mt-2 text-lg">Promotion Manager</span>
     </div>
   );
@@ -25,7 +25,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, error }) => {
   return (
     <div className="min-h-screen bg-[#FEFBFB] flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md border border-pink-100">
-        <JuSpaLogoLarge />
+        <WellnessLogoLarge />
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700">Tên đăng nhập</label>
@@ -93,7 +93,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, error }) => {
           </div>
 
           <div className="text-center text-xs text-gray-400 mt-4">
-             Hệ thống quản lý nội bộ JUSpa
+             Hệ thống quản lý nội bộ Wellness
           </div>
         </form>
       </div>

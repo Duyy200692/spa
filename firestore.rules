@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // JUSpa Management System Firestore Rules
+    // Wellness Management System Firestore Rules
     // Allow read/write for all internal spa operational collections
     match /users/{userId} {
       allow read, write: if true;

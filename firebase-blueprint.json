@@ -2,7 +2,7 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "JUSpa staff and admin accounts with role-based access",
+      "description": "Wellness staff and admin accounts with role-based access",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -91,7 +91,7 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "JUSpa staff user accounts"
+      "description": "Wellness staff user accounts"
     },
     "/services/{serviceId}": {
       "schema": "Service",

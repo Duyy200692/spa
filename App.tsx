@@ -862,7 +862,7 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FEFBFB] text-[#5C3A3A]">
         <div className="text-center">
-          <p className="font-serif text-2xl mb-2 text-[#D97A7D]">JUSpa Promotion Manager</p>
+          <p className="font-serif text-2xl mb-2 text-[#D97A7D]">Wellness Promotion Manager</p>
           <p className="text-sm text-gray-500 animate-pulse">Đang tải dữ liệu hệ thống...</p>
         </div>
       </div>

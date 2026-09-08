@@ -13,10 +13,9 @@ interface HeaderProps {
   isCloudConnected?: boolean;
 }
 
-const JuSpaLogo: React.FC = () => (
+const WellnessLogo: React.FC = () => (
     <div className="flex flex-col items-center text-[#E5989B]">
-        {/* Removed Star SVG */}
-        <span className="font-serif font-bold text-2xl tracking-wider text-[#D97A7D]">JUSpa</span>
+        <span className="font-serif font-bold text-2xl tracking-wider text-[#D97A7D]">Wellness</span>
     </div>
 );
 
@@ -34,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
     <>
       <header className="bg-white/80 backdrop-blur-sm shadow-sm p-4 flex flex-col md:flex-row justify-between items-center sticky top-0 z-50 gap-4 md:gap-0">
         <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-start">
-          <JuSpaLogo />
+          <WellnessLogo />
           <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl md:text-2xl font-light text-[#5C3A3A] hidden md:block">Promotion Manager</h1>
@@ -154,7 +153,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
             <h4 className="font-semibold text-gray-800 mb-1">Cách kích hoạt đồng bộ Firebase Cloud trực tiếp:</h4>
             <ol className="list-decimal list-inside space-y-1 text-xs text-gray-600">
               <li>Truy cập <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-pink-600 underline">Firebase Console</a></li>
-              <li>Chọn dự án của bạn (ví dụ: <code>juspa-manager</code>)</li>
+              <li>Chọn dự án của bạn (ví dụ: <code>wellness-manager</code>)</li>
               <li>Vào <strong>Build &gt; Firestore Database &gt; Rules</strong></li>
               <li>Sao chép nội dung từ file <code>firestore.rules</code> trong mã nguồn và dán vào đó rồi bấm <strong>Publish</strong>.</li>
             </ol>

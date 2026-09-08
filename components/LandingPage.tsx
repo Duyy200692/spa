@@ -11,7 +11,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
       <div className="relative z-10 flex flex-col items-center text-center p-6 animate-fade-in-up">
           
           <h1 className="font-serif text-6xl md:text-8xl font-bold text-[#5C3A3A] mb-12 tracking-wide">
-              JUSpa
+              Wellness
           </h1>
 
           <button 
@@ -28,7 +28,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
       </div>
 
       <div className="absolute bottom-8 text-[#5C3A3A]/30 text-xs tracking-widest">
-          © {new Date().getFullYear()} JUSPA SYSTEM
+          © {new Date().getFullYear()} WELLNESS SYSTEM
       </div>
     </div>
   );
