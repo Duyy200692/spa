@@ -31,7 +31,7 @@ Mở trình duyệt và truy cập vào địa chỉ `http://localhost:5173` (ho
 ### Bước 4: Deploy lên Vercel (Khuyến khích - Dễ nhất)
 
 1.  **Đẩy mã nguồn lên GitHub:**
-    *   Tạo một repository mới trên GitHub (ví dụ: `juspa-manager`).
+    *   Tạo một repository mới trên GitHub (ví dụ: `wellness-manager`).
     *   Trong terminal, chạy các lệnh sau:
       ```bash
       git init
@@ -46,7 +46,7 @@ Mở trình duyệt và truy cập vào địa chỉ `http://localhost:5173` (ho
 2.  **Kết nối Vercel:**
     *   Truy cập [vercel.com](https://vercel.com/) và đăng nhập bằng tài khoản GitHub.
     *   Trên Dashboard, chọn **Add New... > Project**.
-    *   Tìm và **Import** repository `juspa-manager` bạn vừa tạo.
+    *   Tìm và **Import** repository `wellness-manager` bạn vừa tạo.
     *   Vercel sẽ tự động nhận diện đây là một dự án Vite. Bạn **không cần thay đổi bất kỳ cài đặt nào**.
     *   Bấm **Deploy**.
 
@@ -56,7 +56,7 @@ Mở trình duyệt và truy cập vào địa chỉ `http://localhost:5173` (ho
 
 1.  **Cấu hình đường dẫn:**
     *   Mở file `vite.config.ts`.
-    *   Sửa dòng `base: '/JUSpa/'` thành tên repository GitHub của bạn (ví dụ: `base: '/juspa-manager/'`).
+    *   Sửa dòng `base: '/wellness/'` thành tên repository GitHub của bạn (ví dụ: `base: '/wellness-manager/'`).
 2.  **Chạy lệnh Deploy:**
     ```bash
     npm run build
