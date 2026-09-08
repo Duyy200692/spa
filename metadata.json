@@ -1,6 +1,6 @@
 {
   "name": "Wellness Promotion Manager",
-  "description": "A streamlined system for proposing, designing, approving, and managing wellness promotions. It enhances collaboration between Sales, Marketing, Management, and Reception teams.",
+  "description": "A comprehensive management system for Wellness Spa & Promotions: featuring staff & HR management, technician tours, timesheet attendance, payroll calculation, service catalogs, inventory, and promotions.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

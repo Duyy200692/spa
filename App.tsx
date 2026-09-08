@@ -9,7 +9,8 @@ import LoginScreen from './components/LoginScreen';
 import UserManagement from './components/UserManagement';
 import LandingPage from './components/LandingPage';
 import InventoryManagement from './components/InventoryManagement';
-import { User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem } from './types';
+import HRManagement from './components/HRManagement';
+import { User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord } from './types';
 import { 
   USERS as DEFAULT_USERS, 
   SERVICES as DEFAULT_SERVICES, 
@@ -24,8 +25,9 @@ import {
   handleFirestoreError, 
   OperationType 
 } from './storageService';
+import { getInitialHRData, persistHRData } from './hrService';
 
-type View = 'dashboard' | 'services' | 'users' | 'inventory';
+type View = 'dashboard' | 'services' | 'users' | 'inventory' | 'hr';
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
@@ -39,6 +41,13 @@ const App: React.FC = () => {
   const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>(initialData.transactions);
   const [auditSessions, setAuditSessions] = useState<AuditSession[]>(initialData.audits);
   
+  // HR & Payroll Data States
+  const initialHR = useMemo(() => getInitialHRData(), []);
+  const [staffList, setStaffList] = useState<StaffMember[]>(initialHR.staff);
+  const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>(initialHR.attendance);
+  const [toursList, setToursList] = useState<TechnicianTour[]>(initialHR.tours);
+  const [payrollList, setPayrollList] = useState<PayrollRecord[]>(initialHR.payroll);
+
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [view, setView] = useState<View>('dashboard');
   const [isLoading, setIsLoading] = useState(true);
@@ -857,6 +866,78 @@ const App: React.FC = () => {
     }
   };
 
+  // --- HR & Payroll Handlers ---
+  const handleAddStaff = (staff: StaffMember) => {
+    const updated = [staff, ...staffList];
+    setStaffList(updated);
+    persistHRData({ staff: updated });
+  };
+
+  const handleUpdateStaff = (staff: StaffMember) => {
+    const updated = staffList.map(s => s.id === staff.id ? staff : s);
+    setStaffList(updated);
+    persistHRData({ staff: updated });
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    const updated = staffList.filter(s => s.id !== staffId);
+    setStaffList(updated);
+    persistHRData({ staff: updated });
+  };
+
+  const handleSaveAttendance = (record: AttendanceRecord) => {
+    const existingIdx = attendanceList.findIndex(a => a.id === record.id || (a.staffId === record.staffId && a.month === record.month && a.year === record.year));
+    let updated: AttendanceRecord[];
+    if (existingIdx >= 0) {
+      updated = [...attendanceList];
+      updated[existingIdx] = record;
+    } else {
+      updated = [...attendanceList, record];
+    }
+    setAttendanceList(updated);
+    persistHRData({ attendance: updated });
+  };
+
+  const handleSaveTour = (tour: TechnicianTour) => {
+    const existingIdx = toursList.findIndex(t => t.id === tour.id);
+    let updated: TechnicianTour[];
+    if (existingIdx >= 0) {
+      updated = [...toursList];
+      updated[existingIdx] = tour;
+    } else {
+      updated = [tour, ...toursList];
+    }
+    setToursList(updated);
+    persistHRData({ tours: updated });
+  };
+
+  const handleDeleteTour = (tourId: string) => {
+    const updated = toursList.filter(t => t.id !== tourId);
+    setToursList(updated);
+    persistHRData({ tours: updated });
+  };
+
+  const handleSavePayroll = (record: PayrollRecord) => {
+    const existingIdx = payrollList.findIndex(p => p.id === record.id);
+    let updated: PayrollRecord[];
+    if (existingIdx >= 0) {
+      updated = [...payrollList];
+      updated[existingIdx] = record;
+    } else {
+      updated = [...payrollList, record];
+    }
+    setPayrollList(updated);
+    persistHRData({ payroll: updated });
+  };
+
+  const handleBatchUpdatePayroll = (records: PayrollRecord[]) => {
+    const map = new Map(payrollList.map(p => [p.id, p]));
+    records.forEach(r => map.set(r.id, r));
+    const updated = Array.from(map.values());
+    setPayrollList(updated);
+    persistHRData({ payroll: updated });
+  };
+
   // --- Render ---
   if (isLoading) {
     return (
@@ -934,6 +1015,25 @@ const App: React.FC = () => {
             users={users}
             onAddUser={addUser}
             onDeleteUser={deleteUser}
+          />
+        )}
+
+        {view === 'hr' && (
+          <HRManagement
+            currentUser={loggedInUser}
+            staffList={staffList}
+            attendanceList={attendanceList}
+            toursList={toursList}
+            payrollList={payrollList}
+            services={services}
+            onAddStaff={handleAddStaff}
+            onUpdateStaff={handleUpdateStaff}
+            onDeleteStaff={handleDeleteStaff}
+            onSaveAttendance={handleSaveAttendance}
+            onSaveTour={handleSaveTour}
+            onDeleteTour={handleDeleteTour}
+            onSavePayroll={handleSavePayroll}
+            onBatchUpdatePayroll={handleBatchUpdatePayroll}
           />
         )}
       </main>

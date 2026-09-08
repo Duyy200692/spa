@@ -7,8 +7,8 @@ interface HeaderProps {
   currentUser: User;
   onSwitchRole: (role: Role) => void;
   onUpdateUserName: (newName: string) => void;
-  currentView: 'dashboard' | 'services' | 'users' | 'inventory';
-  onViewChange: (view: 'dashboard' | 'services' | 'users' | 'inventory') => void;
+  currentView: 'dashboard' | 'services' | 'users' | 'inventory' | 'hr';
+  onViewChange: (view: 'dashboard' | 'services' | 'users' | 'inventory' | 'hr') => void;
   onLogout: () => void;
   isCloudConnected?: boolean;
 }
@@ -75,6 +75,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
                       className={`${navButtonStyle} ${currentView === 'inventory' ? activeStyle : inactiveStyle}`}
                   >
                       Inventory (Kho)
+                  </button>
+                  <button 
+                      onClick={() => onViewChange('hr')}
+                      className={`${navButtonStyle} ${currentView === 'hr' ? activeStyle : inactiveStyle} flex items-center gap-1`}
+                  >
+                      <span>Nhân sự & Lương</span>
                   </button>
                   {currentUser.role === Role.Management && (
                     <button 
