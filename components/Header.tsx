@@ -3,7 +3,7 @@ import { User, Role } from '../types';
 import EditUserModal from './EditUserModal';
 import Modal from './shared/Modal';
 
-export type AppView = 'dashboard' | 'services' | 'users' | 'inventory' | 'hr' | 'smart_booking' | 'emr' | 'crm_automation' | 'smart_clinic_hardware';
+export type AppView = 'dashboard' | 'services' | 'users' | 'inventory' | 'hr' | 'smart_booking' | 'emr' | 'crm_automation' | 'smart_clinic_hardware' | 'kiotviet_sync';
 
 interface HeaderProps {
   currentUser: User;
@@ -79,7 +79,13 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
                       onClick={() => onViewChange('smart_clinic_hardware')}
                       className={`${navButtonStyle} ${currentView === 'smart_clinic_hardware' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
                   >
-                      <span>🔬 Thiết Bị & Soi Da</span>
+                      <span>🔬 VISIA & Thiết Bị</span>
+                  </button>
+                  <button 
+                      onClick={() => onViewChange('kiotviet_sync')}
+                      className={`${navButtonStyle} ${currentView === 'kiotviet_sync' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
+                  >
+                      <span>🛒 KiotViet POS</span>
                   </button>
 
                   <div className="h-4 w-px bg-gray-300 mx-0.5 hidden lg:block" />

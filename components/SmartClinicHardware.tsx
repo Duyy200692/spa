@@ -16,9 +16,12 @@ import {
   Camera,
   Layers,
   Plus,
-  Info
+  Info,
+  FolderSync,
+  FolderCheck
 } from 'lucide-react';
 import Modal from './shared/Modal';
+import VisiaHotFolderStation from './VisiaHotFolderStation';
 
 interface SmartClinicHardwareProps {
   iotDevices: IoTDevice[];
@@ -28,6 +31,7 @@ interface SmartClinicHardwareProps {
   onSyncSkinToEMR: (report: SkinAnalysisReport, customerCode: string) => void;
   onSaveTip: (tip: HighTechTip) => void;
   onUpdateDevice?: (device: IoTDevice) => void;
+  onNavigateToEMR?: (customerCode?: string) => void;
 }
 
 const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
@@ -37,9 +41,10 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
   medicalRecords,
   onSyncSkinToEMR,
   onSaveTip,
-  onUpdateDevice
+  onUpdateDevice,
+  onNavigateToEMR
 }) => {
-  const [activeTab, setActiveTab] = useState<'iot_devices' | 'skin_analyzer' | 'high_tech_tips'>('iot_devices');
+  const [activeTab, setActiveTab] = useState<'visia_hot_folder' | 'iot_devices' | 'skin_analyzer' | 'high_tech_tips'>('visia_hot_folder');
   const [selectedReportId, setSelectedReportId] = useState<string>(skinReports[0]?.id || '');
   const [isSimulateScanModalOpen, setIsSimulateScanModalOpen] = useState(false);
   const [isNewTipModalOpen, setIsNewTipModalOpen] = useState(false);
@@ -161,6 +166,18 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
       {/* Tabs */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-sm">
         <button
+          onClick={() => setActiveTab('visia_hot_folder')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
+            activeTab === 'visia_hot_folder'
+              ? 'bg-[#D97A7D] text-white shadow-sm'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <FolderSync className="w-4 h-4" />
+          Trạm Thu Thập VISIA (Hot-Folder Agent)
+        </button>
+
+        <button
           onClick={() => setActiveTab('iot_devices')}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
             activeTab === 'iot_devices'
@@ -181,7 +198,7 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          Máy Phân Tích Da AI 3D (Magic Mirror)
+          Báo Cáo Soi Da & Phân Tích ({skinReports.length})
         </button>
 
         <button
@@ -196,6 +213,20 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
           Quản Lý Đầu Tip & Số Shoot Còn Lại ({highTechTips.length} đầu tip)
         </button>
       </div>
+
+      {/* TAB: VISIA HOT-FOLDER INTEGRATION HUB */}
+      {activeTab === 'visia_hot_folder' && (
+        <VisiaHotFolderStation
+          skinReports={skinReports}
+          medicalRecords={medicalRecords}
+          onSyncSkinToEMR={onSyncSkinToEMR}
+          onNavigateToEMR={onNavigateToEMR}
+          onViewReportDetails={(reportId) => {
+            setSelectedReportId(reportId);
+            setActiveTab('skin_analyzer');
+          }}
+        />
+      )}
 
       {/* TAB 1: IOT DEVICES REAL-TIME MONITORING */}
       {activeTab === 'iot_devices' && (
@@ -376,79 +407,185 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
                   </div>
                 </div>
 
-                {/* 7 Core Scientific Skin Metrics */}
+                {/* 8 Core Scientific Skin Metrics for VISIA or 7 standard metrics */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    7 Chỉ Số Da Liễu Đo Bằng Trắc Quang Học 3D
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {/* 1. Hydration */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>💧 Độ ẩm biểu bì (Hydration)</span>
-                        <span className="text-blue-600">{currentReport.metrics.hydration}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${currentReport.metrics.hydration}%` }} />
-                      </div>
-                    </div>
-
-                    {/* 2. Sebum */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>🧪 Tuyến bã nhờn / Dầu (Sebum)</span>
-                        <span className="text-amber-600">{currentReport.metrics.sebum}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${currentReport.metrics.sebum}%` }} />
-                      </div>
-                    </div>
-
-                    {/* 3. Pigmentation */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>☀️ Sắc tố Melanin & Tàn nhang</span>
-                        <span className="text-rose-600">{currentReport.metrics.pigmentation}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full" style={{ width: `${currentReport.metrics.pigmentation}%` }} />
-                      </div>
-                    </div>
-
-                    {/* 4. Wrinkles */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>👵 Nếp nhăn & Độ chùng nhão</span>
-                        <span className="text-purple-600">{currentReport.metrics.wrinkles}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-purple-500 rounded-full" style={{ width: `${currentReport.metrics.wrinkles}%` }} />
-                      </div>
-                    </div>
-
-                    {/* 5. Pores */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>🔍 Độ giãn nở lỗ chân lông (Pores)</span>
-                        <span className="text-indigo-600">{currentReport.metrics.pores}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${currentReport.metrics.pores}%` }} />
-                      </div>
-                    </div>
-
-                    {/* 6. Acne / Porphyrin */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex justify-between font-semibold text-gray-800 mb-1">
-                        <span>🦠 Vi khuẩn P.Acnes & Ổ viêm</span>
-                        <span className="text-red-600">{currentReport.metrics.acneBacteria}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-red-500 rounded-full" style={{ width: `${currentReport.metrics.acneBacteria}%` }} />
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                      {currentReport.visiaMetrics ? (
+                        <>
+                          <FolderCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          8 Chỉ Số Đa Phổ Chuyên Sâu Canfield VISIA (Hoa Kỳ)
+                        </>
+                      ) : (
+                        '7 Chỉ Số Da Liễu Đo Bằng Trắc Quang Học 3D'
+                      )}
+                    </h4>
+                    {currentReport.visiaMetrics && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Xếp Hạng Phân Vị: Top {100 - currentReport.visiaMetrics.percentileRank}% Làn Da Cùng Độ Tuổi
+                      </span>
+                    )}
                   </div>
+
+                  {currentReport.visiaMetrics ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                      {/* 1. Spots */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🎯 Đốm nâu bề mặt (Spots)</span>
+                          <span className="text-amber-700">{currentReport.visiaMetrics.spots}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.spots}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 2. Wrinkles */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>👵 Nếp nhăn (Wrinkles)</span>
+                          <span className="text-purple-600">{currentReport.visiaMetrics.wrinkles}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.wrinkles}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 3. Texture */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🔬 Kết cấu biểu bì (Texture)</span>
+                          <span className="text-blue-600">{currentReport.visiaMetrics.texture}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.texture}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 4. Pores */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🔍 Lỗ chân lông (Pores)</span>
+                          <span className="text-indigo-600">{currentReport.visiaMetrics.pores}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.pores}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 5. UV Spots */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>☀️ Đốm tia UV (UV Spots)</span>
+                          <span className="text-rose-600">{currentReport.visiaMetrics.uvSpots}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-rose-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.uvSpots}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 6. Brown Spots */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🤎 Nám sâu Melanin</span>
+                          <span className="text-orange-700">{currentReport.visiaMetrics.brownSpots}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-orange-600 rounded-full" style={{ width: `${currentReport.visiaMetrics.brownSpots}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 7. Red Areas */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🔴 Mao mạch đỏ (Red Areas)</span>
+                          <span className="text-red-600">{currentReport.visiaMetrics.redAreas}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-red-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.redAreas}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 8. Porphyrins */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🦠 Vi khuẩn P.Acnes</span>
+                          <span className="text-pink-600">{currentReport.visiaMetrics.porphyrins}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-pink-500 rounded-full" style={{ width: `${currentReport.visiaMetrics.porphyrins}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {/* 1. Hydration */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>💧 Độ ẩm biểu bì (Hydration)</span>
+                          <span className="text-blue-600">{currentReport.metrics.hydration}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${currentReport.metrics.hydration}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 2. Sebum */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🧪 Tuyến bã nhờn / Dầu (Sebum)</span>
+                          <span className="text-amber-600">{currentReport.metrics.sebum}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${currentReport.metrics.sebum}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 3. Pigmentation */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>☀️ Sắc tố Melanin & Tàn nhang</span>
+                          <span className="text-rose-600">{currentReport.metrics.pigmentation}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-rose-500 rounded-full" style={{ width: `${currentReport.metrics.pigmentation}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 4. Wrinkles */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>👵 Nếp nhăn & Độ chùng nhão</span>
+                          <span className="text-purple-600">{currentReport.metrics.wrinkles}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${currentReport.metrics.wrinkles}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 5. Pores */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🔍 Độ giãn nở lỗ chân lông (Pores)</span>
+                          <span className="text-indigo-600">{currentReport.metrics.pores}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${currentReport.metrics.pores}%` }} />
+                        </div>
+                      </div>
+
+                      {/* 6. Acne / Porphyrin */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between font-semibold text-gray-800 mb-1">
+                          <span>🦠 Vi khuẩn P.Acnes & Ổ viêm</span>
+                          <span className="text-red-600">{currentReport.metrics.acneBacteria}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-red-500 rounded-full" style={{ width: `${currentReport.metrics.acneBacteria}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* AI Summary & Recommendations */}

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   MedicalRecord,
   TreatmentSession,
-  StaffMember
+  StaffMember,
+  SkinAnalysisReport
 } from '../types';
 import {
   FileText,
@@ -15,7 +16,10 @@ import {
   Printer,
   ShieldCheck,
   Camera,
-  Layers
+  Layers,
+  Sparkles,
+  FolderCheck,
+  ArrowUpRight
 } from 'lucide-react';
 import Modal from './shared/Modal';
 
@@ -23,19 +27,24 @@ interface EMRManagementProps {
   medicalRecords: MedicalRecord[];
   staffList: StaffMember[];
   tips?: unknown;
+  skinReports?: SkinAnalysisReport[];
   onSaveRecord: (record: MedicalRecord) => void;
   onDeductTipShots?: (machineModel: string, tipName: string, shots: number) => void;
+  onNavigateToHardware?: () => void;
 }
 
 const EMRManagement: React.FC<EMRManagementProps> = ({
   medicalRecords,
   staffList,
+  skinReports = [],
   onSaveRecord,
-  onDeductTipShots
+  onDeductTipShots,
+  onNavigateToHardware
 }) => {
   const [selectedRecordId, setSelectedRecordId] = useState<string>(medicalRecords[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkinType, setSelectedSkinType] = useState<string>('all');
+  const [selectedSkinReportIndex, setSelectedSkinReportIndex] = useState(0);
 
   // Modals
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
@@ -364,6 +373,204 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Linked VISIA Multi-spectral Skin Reports Card */}
+              {(() => {
+                const patientSkinReports = skinReports.filter(r => r.customerCode === currentRecord?.customerCode);
+                const activeSkinReport = patientSkinReports[selectedSkinReportIndex] || patientSkinReports[0];
+
+                if (patientSkinReports.length === 0 || !activeSkinReport) return null;
+
+                return (
+                  <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-[#D97A7D]">
+                          <Camera className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-gray-900 text-sm">
+                              Hồ Sơ Soi Da Đa Phổ Canfield VISIA
+                            </h4>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                              <FolderCheck className="w-3 h-3" /> Hot-Folder Auto-Synced
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Phiên khám ngày: {activeSkinReport.date} • Thiết bị: {activeSkinReport.deviceModel || activeSkinReport.analystName}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {patientSkinReports.length > 1 && (
+                          <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs">
+                            {patientSkinReports.map((rep, idx) => (
+                              <button
+                                key={rep.id}
+                                onClick={() => setSelectedSkinReportIndex(idx)}
+                                className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors ${
+                                  (selectedSkinReportIndex === idx || (!selectedSkinReportIndex && idx === 0))
+                                    ? 'bg-white text-gray-900 shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-900'
+                                }`}
+                              >
+                                Lần {patientSkinReports.length - idx} ({rep.date})
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {onNavigateToHardware && (
+                          <button
+                            onClick={onNavigateToHardware}
+                            className="text-xs text-[#D97A7D] hover:underline font-semibold flex items-center gap-1"
+                          >
+                            Trạm VISIA <ArrowUpRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Biological Age & Percentile */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                      <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block font-semibold">TUỔI SINH HỌC TRUSKIN AGE®</span>
+                          <span className="text-lg font-bold text-blue-700">{activeSkinReport.skinAge} tuổi</span>
+                        </div>
+                        <div className="text-[11px] text-blue-600 font-medium text-right">
+                          Tuổi thật: {currentRecord.birthYear ? new Date().getFullYear() - currentRecord.birthYear : '28'}
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-rose-50/70 rounded-xl border border-rose-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block font-semibold">ĐIỂM SỨC KHỎE TỔNG THỂ</span>
+                          <span className="text-lg font-bold text-[#D97A7D]">{activeSkinReport.overallScore}/100</span>
+                        </div>
+                        <span className="text-[11px] text-rose-700 font-medium">Thang Canfield</span>
+                      </div>
+
+                      <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block font-semibold">PHÂN VỊ DỮ LIỆU MẪU</span>
+                          <span className="text-lg font-bold text-emerald-700">
+                            Top {activeSkinReport.visiaMetrics ? (100 - activeSkinReport.visiaMetrics.percentileRank) : 25}%
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-emerald-600 font-medium">So với nhóm tuổi</span>
+                      </div>
+                    </div>
+
+                    {/* 8 VISIA Multi-spectral Bars */}
+                    {activeSkinReport.visiaMetrics && (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[11px] font-bold text-gray-700 block uppercase tracking-wider">
+                          8 Thông Số Đa Phổ Lâm Sàng
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Đốm nâu</span>
+                              <span className="text-amber-700">{activeSkinReport.visiaMetrics.spots}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.spots}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Nếp nhăn</span>
+                              <span className="text-purple-700">{activeSkinReport.visiaMetrics.wrinkles}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-purple-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.wrinkles}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Đốm UV</span>
+                              <span className="text-rose-700">{activeSkinReport.visiaMetrics.uvSpots}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-rose-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.uvSpots}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Nám Melanin</span>
+                              <span className="text-orange-700">{activeSkinReport.visiaMetrics.brownSpots}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-orange-600 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.brownSpots}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Lỗ chân lông</span>
+                              <span className="text-indigo-700">{activeSkinReport.visiaMetrics.pores}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.pores}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Mao mạch đỏ</span>
+                              <span className="text-red-700">{activeSkinReport.visiaMetrics.redAreas}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-red-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.redAreas}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>P.Acnes</span>
+                              <span className="text-pink-700">{activeSkinReport.visiaMetrics.porphyrins}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-pink-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.porphyrins}%` }} />
+                            </div>
+                          </div>
+
+                          <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex justify-between font-semibold text-gray-700 text-[11px] mb-1">
+                              <span>Kết cấu da</span>
+                              <span className="text-blue-700">{activeSkinReport.visiaMetrics.texture}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${activeSkinReport.visiaMetrics.texture}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Diagnosis & Recommendations */}
+                    <div className="p-3 bg-gray-50 rounded-xl text-xs text-gray-700 border border-gray-100 space-y-1">
+                      <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#D97A7D]" />
+                        Gợi Ý Phác Đồ Dựa Trên Kết Quả Soi Da:
+                      </div>
+                      <p className="text-[11px] text-gray-600 leading-relaxed">{activeSkinReport.diagnosisSummary}</p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {activeSkinReport.aiRecommendedServices.map((srv, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded bg-white border border-gray-200 font-semibold text-[10px] text-[#5C3A3A]">
+                            ✨ {srv}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Sessions Timeline View */}
               <div className="space-y-4">

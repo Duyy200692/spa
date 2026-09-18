@@ -14,6 +14,7 @@ import SmartBookingManagement from './components/SmartBookingManagement';
 import EMRManagement from './components/EMRManagement';
 import CRMAutomation from './components/CRMAutomation';
 import SmartClinicHardware from './components/SmartClinicHardware';
+import KiotVietSyncHub from './components/KiotVietSyncHub';
 import { 
   User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, 
   StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord,
@@ -1388,8 +1389,10 @@ const App: React.FC = () => {
             medicalRecords={medicalRecords}
             staffList={staffList}
             tips={highTechTips}
+            skinReports={skinReports}
             onSaveRecord={handleSaveMedicalRecord}
             onDeductTipShots={handleDeductTipShots}
+            onNavigateToHardware={() => setView('smart_clinic_hardware')}
           />
         )}
 
@@ -1428,6 +1431,24 @@ const App: React.FC = () => {
             onSyncSkinToEMR={handleSyncSkinToEMR}
             onSaveTip={handleSaveHighTechTip}
             onUpdateDevice={handleUpdateIoTDevice}
+            onNavigateToEMR={() => setView('emr')}
+          />
+        )}
+
+        {view === 'kiotviet_sync' && (
+          <KiotVietSyncHub
+            medicalRecords={medicalRecords}
+            inventoryItems={inventoryItems}
+            onUpdateMedicalRecords={(updated) => {
+              setMedicalRecords(updated);
+              persistClinicData({ emrRecords: updated });
+            }}
+            onUpdateInventoryItems={(updated) => {
+              setInventoryItems(updated);
+              persistAppData({ inventory: updated });
+            }}
+            onNavigateToEMR={() => setView('emr')}
+            onNavigateToInventory={() => setView('inventory')}
           />
         )}
       </main>
