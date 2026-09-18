@@ -3,12 +3,14 @@ import { User, Role } from '../types';
 import EditUserModal from './EditUserModal';
 import Modal from './shared/Modal';
 
+export type AppView = 'dashboard' | 'services' | 'users' | 'inventory' | 'hr' | 'smart_booking' | 'emr' | 'crm_automation' | 'smart_clinic_hardware';
+
 interface HeaderProps {
   currentUser: User;
   onSwitchRole: (role: Role) => void;
   onUpdateUserName: (newName: string) => void;
-  currentView: 'dashboard' | 'services' | 'users' | 'inventory' | 'hr';
-  onViewChange: (view: 'dashboard' | 'services' | 'users' | 'inventory' | 'hr') => void;
+  currentView: AppView;
+  onViewChange: (view: AppView) => void;
   onLogout: () => void;
   isCloudConnected?: boolean;
 }
@@ -53,7 +55,36 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
                   </button>
                 )}
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 border border-gray-200 p-1 rounded-lg bg-gray-50">
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 border border-gray-200 p-1 rounded-lg bg-gray-50">
+                  {/* Smart Clinic Suite */}
+                  <button 
+                      onClick={() => onViewChange('smart_booking')}
+                      className={`${navButtonStyle} ${currentView === 'smart_booking' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
+                  >
+                      <span>📅 Smart Booking</span>
+                  </button>
+                  <button 
+                      onClick={() => onViewChange('emr')}
+                      className={`${navButtonStyle} ${currentView === 'emr' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
+                  >
+                      <span>📋 Bệnh Án EMR</span>
+                  </button>
+                  <button 
+                      onClick={() => onViewChange('crm_automation')}
+                      className={`${navButtonStyle} ${currentView === 'crm_automation' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
+                  >
+                      <span>🤖 CRM & ZNS</span>
+                  </button>
+                  <button 
+                      onClick={() => onViewChange('smart_clinic_hardware')}
+                      className={`${navButtonStyle} ${currentView === 'smart_clinic_hardware' ? activeStyle : inactiveStyle} flex items-center gap-1 font-semibold`}
+                  >
+                      <span>🔬 Thiết Bị & Soi Da</span>
+                  </button>
+
+                  <div className="h-4 w-px bg-gray-300 mx-0.5 hidden lg:block" />
+
+                  {/* Core Management */}
                   {!isAccountant && (
                     <button 
                         onClick={() => onViewChange('dashboard')} 
@@ -74,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onSwitchRole, onUpdateUser
                       onClick={() => onViewChange('inventory')}
                       className={`${navButtonStyle} ${currentView === 'inventory' ? activeStyle : inactiveStyle}`}
                   >
-                      Inventory (Kho)
+                      Kho & Vật Tư
                   </button>
                   <button 
                       onClick={() => onViewChange('hr')}

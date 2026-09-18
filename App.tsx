@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs, writeBatch, query, addDoc, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
-import Header from './components/Header';
+import Header, { AppView } from './components/Header';
 import Dashboard from './components/Dashboard';
 import ServiceManagement from './components/ServiceManagement';
 import LoginScreen from './components/LoginScreen';
@@ -10,7 +10,17 @@ import UserManagement from './components/UserManagement';
 import LandingPage from './components/LandingPage';
 import InventoryManagement from './components/InventoryManagement';
 import HRManagement from './components/HRManagement';
-import { User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord } from './types';
+import SmartBookingManagement from './components/SmartBookingManagement';
+import EMRManagement from './components/EMRManagement';
+import CRMAutomation from './components/CRMAutomation';
+import SmartClinicHardware from './components/SmartClinicHardware';
+import { 
+  User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, 
+  StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord,
+  Booking, ClinicRoom, MedicalRecord, HighTechTip, IoTDevice, SkinAnalysisReport,
+  AutomatedMessage, TreatmentCycleAlert, AiChatMessage, BookingStatus,
+  MarketingLead, DripCampaign, PostTreatmentCareTicket, ChurnRiskCustomer, LoyaltyMember, ReferralRecord
+} from './types';
 import { 
   USERS as DEFAULT_USERS, 
   SERVICES as DEFAULT_SERVICES, 
@@ -26,8 +36,9 @@ import {
   OperationType 
 } from './storageService';
 import { getInitialHRData, persistHRData } from './hrService';
+import { getInitialClinicData, persistClinicData, deductShotsFromTip } from './clinicService';
 
-type View = 'dashboard' | 'services' | 'users' | 'inventory' | 'hr';
+type View = AppView;
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
@@ -47,6 +58,24 @@ const App: React.FC = () => {
   const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>(initialHR.attendance);
   const [toursList, setToursList] = useState<TechnicianTour[]>(initialHR.tours);
   const [payrollList, setPayrollList] = useState<PayrollRecord[]>(initialHR.payroll);
+
+  // Smart Clinic Management States
+  const initialClinic = useMemo(() => getInitialClinicData(), []);
+  const [clinicRooms, setClinicRooms] = useState<ClinicRoom[]>(initialClinic.rooms);
+  const [clinicBookings, setClinicBookings] = useState<Booking[]>(initialClinic.bookings);
+  const [highTechTips, setHighTechTips] = useState<HighTechTip[]>(initialClinic.tips);
+  const [iotDevices, setIotDevices] = useState<IoTDevice[]>(initialClinic.iotDevices);
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(initialClinic.emrRecords);
+  const [skinReports, setSkinReports] = useState<SkinAnalysisReport[]>(initialClinic.skinReports);
+  const [automatedMsgs, setAutomatedMsgs] = useState<AutomatedMessage[]>(initialClinic.automatedMsgs);
+  const [cycleAlerts, setCycleAlerts] = useState<TreatmentCycleAlert[]>(initialClinic.cycleAlerts);
+  const [chatMessages, setChatMessages] = useState<AiChatMessage[]>(initialClinic.chatMessages);
+  const [marketingLeads, setMarketingLeads] = useState<MarketingLead[]>(initialClinic.marketingLeads);
+  const [dripCampaigns, setDripCampaigns] = useState<DripCampaign[]>(initialClinic.dripCampaigns);
+  const [postTreatmentTickets, setPostTreatmentTickets] = useState<PostTreatmentCareTicket[]>(initialClinic.postTreatmentTickets);
+  const [churnCustomers, setChurnCustomers] = useState<ChurnRiskCustomer[]>(initialClinic.churnCustomers);
+  const [loyaltyMembers, setLoyaltyMembers] = useState<LoyaltyMember[]>(initialClinic.loyaltyMembers);
+  const [referralRecords, setReferralRecords] = useState<ReferralRecord[]>(initialClinic.referralRecords);
 
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [view, setView] = useState<View>('dashboard');
@@ -938,6 +967,307 @@ const App: React.FC = () => {
     persistHRData({ payroll: updated });
   };
 
+  // --- Smart Clinic Handlers ---
+  const handleSaveBooking = (booking: Booking) => {
+    const existingIdx = clinicBookings.findIndex(b => b.id === booking.id);
+    let updated: Booking[];
+    if (existingIdx >= 0) {
+      updated = [...clinicBookings];
+      updated[existingIdx] = booking;
+    } else {
+      updated = [booking, ...clinicBookings];
+    }
+    setClinicBookings(updated);
+    persistClinicData({ bookings: updated });
+
+    // If room is assigned and status is in_progress, update room status
+    if (booking.roomId) {
+      const updatedRooms = clinicRooms.map(r => {
+        if (r.id === booking.roomId) {
+          return {
+            ...r,
+            status: booking.status === 'in_progress' ? ('occupied' as const) : ('available' as const)
+          };
+        }
+        return r;
+      });
+      setClinicRooms(updatedRooms);
+      persistClinicData({ rooms: updatedRooms });
+    }
+  };
+
+  const handleUpdateBookingStatus = (bookingId: string, status: BookingStatus) => {
+    const target = clinicBookings.find(b => b.id === bookingId);
+    const updated = clinicBookings.map(b => b.id === bookingId ? { ...b, status } : b);
+    setClinicBookings(updated);
+    persistClinicData({ bookings: updated });
+
+    // Update Room status
+    if (target?.roomId) {
+      const updatedRooms = clinicRooms.map(r => {
+        if (r.id === target.roomId) {
+          return {
+            ...r,
+            status: status === 'in_progress' ? ('occupied' as const) : ('available' as const)
+          };
+        }
+        return r;
+      });
+      setClinicRooms(updatedRooms);
+      persistClinicData({ rooms: updatedRooms });
+    }
+
+    // If completed, automatically trigger CSAT survey in CRM
+    if (status === 'completed' && target && !target.csatSent) {
+      const csatMsg: AutomatedMessage = {
+        id: `csat-${Date.now()}`,
+        type: 'csat_survey',
+        customerName: target.customerName,
+        customerPhone: target.customerPhone,
+        channel: 'Zalo ZNS',
+        content: `[WELLNESS CLINIC] Cảm ơn quý khách ${target.customerName} đã trải nghiệm dịch vụ ${target.serviceName} hôm nay. Kính mời quý khách dành 30 giây đánh giá chất lượng KTV & cơ sở: https://wellness.vn/csat-khao-sat`,
+        scheduledTime: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        status: 'delivered',
+        sentAt: new Date().toISOString().replace('T', ' ').slice(0, 16)
+      };
+      const updatedMsgs = [csatMsg, ...automatedMsgs];
+      setAutomatedMsgs(updatedMsgs);
+      persistClinicData({ automatedMsgs: updatedMsgs });
+    }
+  };
+
+  const handleSendZnsReminder = (booking: Booking) => {
+    const znsMsg: AutomatedMessage = {
+      id: `zns-${Date.now()}`,
+      type: 'reminder_24h',
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
+      channel: 'Zalo ZNS',
+      content: `[WELLNESS CLINIC] Nhắc lịch hẹn ngày ${booking.date} lúc ${booking.time} cho dịch vụ ${booking.serviceName} tại Phòng ${booking.roomName || 'chuyên khoa'}. KTV đón tiếp: ${booking.technicianName || 'KTV Trưởng'}.`,
+      scheduledTime: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      status: 'delivered',
+      sentAt: new Date().toISOString().replace('T', ' ').slice(0, 16)
+    };
+    const updatedMsgs = [znsMsg, ...automatedMsgs];
+    setAutomatedMsgs(updatedMsgs);
+
+    const updatedBookings = clinicBookings.map(b => b.id === booking.id ? { ...b, znsReminderSent: true } : b);
+    setClinicBookings(updatedBookings);
+    persistClinicData({ automatedMsgs: updatedMsgs, bookings: updatedBookings });
+
+    alert(`Đã gửi Zalo ZNS nhắc lịch 24h thành công đến số ${booking.customerPhone} (${booking.customerName})!`);
+  };
+
+  const handleSaveMedicalRecord = (record: MedicalRecord) => {
+    const existingIdx = medicalRecords.findIndex(r => r.id === record.id);
+    let updated: MedicalRecord[];
+    if (existingIdx >= 0) {
+      updated = [...medicalRecords];
+      updated[existingIdx] = record;
+    } else {
+      updated = [record, ...medicalRecords];
+    }
+    setMedicalRecords(updated);
+    persistClinicData({ emrRecords: updated });
+  };
+
+  const handleDeductTipShots = (machineModel: string, tipName: string, shots: number) => {
+    const updatedTips = deductShotsFromTip(highTechTips, machineModel, tipName, shots);
+    setHighTechTips(updatedTips);
+    persistClinicData({ tips: updatedTips });
+  };
+
+  const handleSendAutomatedMsg = (msg: AutomatedMessage) => {
+    const updated = [msg, ...automatedMsgs];
+    setAutomatedMsgs(updated);
+    persistClinicData({ automatedMsgs: updated });
+  };
+
+  const handleTriggerCycleReminder = (alertItem: TreatmentCycleAlert) => {
+    const znsMsg: AutomatedMessage = {
+      id: `cycle-zns-${Date.now()}`,
+      type: 'treatment_cycle',
+      customerName: alertItem.customerName,
+      customerPhone: alertItem.customerPhone,
+      channel: 'Zalo ZNS',
+      content: `[WELLNESS CLINIC] Đã đến chu kỳ tái sinh da theo phác đồ ${alertItem.treatmentName} (buổi trước ngày ${alertItem.lastSessionDate}). Kính mời chị đặt lịch buổi tiếp theo để duy trì kết quả tối ưu.`,
+      scheduledTime: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      status: 'delivered',
+      sentAt: new Date().toISOString().replace('T', ' ').slice(0, 16)
+    };
+    const updatedMsgs = [znsMsg, ...automatedMsgs];
+    setAutomatedMsgs(updatedMsgs);
+
+    const updatedAlerts = cycleAlerts.map(a => a.id === alertItem.id ? { ...a, status: 'notified' as const } : a);
+    setCycleAlerts(updatedAlerts);
+    persistClinicData({ automatedMsgs: updatedMsgs, cycleAlerts: updatedAlerts });
+
+    alert(`Đã kích hoạt tin nhắn ZNS nhắc liệu trình tự động đến khách hàng ${alertItem.customerName}!`);
+  };
+
+  const handleUpdateIoTDevice = (updatedDevice: IoTDevice) => {
+    const updated = iotDevices.map(d => d.id === updatedDevice.id ? updatedDevice : d);
+    setIotDevices(updated);
+    persistClinicData({ iotDevices: updated });
+  };
+
+  const handleSendChatReply = (userText: string) => {
+    const userMsg: AiChatMessage = {
+      id: `chat-${Date.now()}`,
+      sender: 'user',
+      text: userText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // AI logic & lead scoring evaluation
+    const lower = userText.toLowerCase();
+    let replyText = 'Dạ Wellness Clinic xin chào quý khách! Hệ thống đã ghi nhận nhu cầu của quý khách và sẽ kết nối bác sĩ chuyên khoa da liễu hỗ trợ ngay ạ.';
+    let leadScore: 'Hot' | 'Warm' | 'Cold' = 'Warm';
+    let suggestedService = 'Tư Vấn Da Liễu';
+
+    if (lower.includes('nám') || lower.includes('tàn nhang') || lower.includes('melasma')) {
+      replyText = 'Chào bạn! Với tình trạng nám và sắc tố, Wellness Clinic đang ứng dụng công nghệ Laser PicoWay Picosecond chuẩn FDA Hoa Kỳ. Tia laser phá vỡ hạt sắc tố thành siêu vi điểm mà không gây bỏng rát hay tổn thương biểu bì. Bạn có muốn đặt lịch soi da AI 3D miễn phí cùng Bác sĩ CKI không ạ?';
+      leadScore = 'Hot';
+      suggestedService = 'Laser PicoWay Trị Nám';
+    } else if (lower.includes('hifu') || lower.includes('nâng cơ') || lower.includes('chảy xệ') || lower.includes('trẻ hóa')) {
+      replyText = 'Dạ công nghệ HIFU Ultraformer MPT thế giới mới tại Wellness sử dụng sóng siêu âm hội tụ vi điểm đa tầng (1.5mm - 3.0mm - 4.5mm) giúp săn chắc cơ SMAS và thon gọn viền hàm tức thì chỉ sau 1 lần làm duy nhất. Giá gói đang ưu đãi giảm 40% trong tháng này ạ!';
+      leadScore = 'Hot';
+      suggestedService = 'HIFU Ultraformer MPT';
+    } else if (lower.includes('đặt lịch') || lower.includes('hôm nay') || lower.includes('mai') || lower.includes('sdt') || lower.includes('số điện thoại')) {
+      replyText = 'Dạ tuyệt vời ạ! Em đã lưu thông tin và chuyển ngay cho Bộ phận Chăm sóc khách hàng gọi lại sau 5 phút để xác nhận lịch hẹn và chuẩn bị phòng chuyên khoa cho chị nhé!';
+      leadScore = 'Hot';
+      suggestedService = 'Đặt Lịch Hẹn Ngay';
+    } else if (lower.includes('giá') || lower.includes('bao nhiêu') || lower.includes('bảng giá')) {
+      replyText = 'Dạ bảng giá các dịch vụ công nghệ cao tại Wellness dao động từ 1.200.000đ - 18.000.000đ tùy theo cấp độ phác đồ. Hiện đang có chương trình trải nghiệm buổi đầu giảm tới 50% ạ.';
+      leadScore = 'Warm';
+      suggestedService = 'Báo Giá Phác Đồ';
+    }
+
+    const aiMsg: AiChatMessage = {
+      id: `chat-${Date.now() + 1}`,
+      sender: 'ai',
+      text: replyText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      leadScore,
+      suggestedService
+    };
+
+    const updatedChat = [...chatMessages, userMsg, aiMsg];
+    setChatMessages(updatedChat);
+    persistClinicData({ chatMessages: updatedChat });
+  };
+
+  const handleSyncSkinToEMR = (report: SkinAnalysisReport, customerCode: string) => {
+    const updatedReports = [report, ...skinReports];
+    setSkinReports(updatedReports);
+
+    // Sync into medical record
+    const targetRecord = medicalRecords.find(r => r.customerCode === customerCode);
+    if (targetRecord) {
+      const updatedRec: MedicalRecord = {
+        ...targetRecord,
+        diagnosis: `${targetRecord.diagnosis} | [Soi da AI ngày ${report.date}: Điểm da ${report.overallScore}/100, Tuổi da ${report.skinAge}]`,
+        updatedDate: report.date
+      };
+      const updatedRecords = medicalRecords.map(r => r.customerCode === customerCode ? updatedRec : r);
+      setMedicalRecords(updatedRecords);
+      persistClinicData({ skinReports: updatedReports, emrRecords: updatedRecords });
+    } else {
+      persistClinicData({ skinReports: updatedReports });
+    }
+  };
+
+  const handleSaveHighTechTip = (tip: HighTechTip) => {
+    const existingIdx = highTechTips.findIndex(t => t.id === tip.id);
+    let updated: HighTechTip[];
+    if (existingIdx >= 0) {
+      updated = [...highTechTips];
+      updated[existingIdx] = tip;
+    } else {
+      updated = [tip, ...highTechTips];
+    }
+    setHighTechTips(updated);
+    persistClinicData({ tips: updated });
+  };
+
+  const handleUpdateLead = (updatedLead: MarketingLead) => {
+    const updated = marketingLeads.map(l => l.id === updatedLead.id ? updatedLead : l);
+    setMarketingLeads(updated);
+    persistClinicData({ marketingLeads: updated });
+  };
+
+  const handleAddLead = (newLead: MarketingLead) => {
+    const updated = [newLead, ...marketingLeads];
+    setMarketingLeads(updated);
+    persistClinicData({ marketingLeads: updated });
+  };
+
+  const handleUpdateDripCampaign = (updatedCampaign: DripCampaign) => {
+    const updated = dripCampaigns.map(c => c.id === updatedCampaign.id ? updatedCampaign : c);
+    setDripCampaigns(updated);
+    persistClinicData({ dripCampaigns: updated });
+  };
+
+  const handleUpdatePostTreatmentTicket = (updatedTicket: PostTreatmentCareTicket) => {
+    const updated = postTreatmentTickets.map(t => t.id === updatedTicket.id ? updatedTicket : t);
+    setPostTreatmentTickets(updated);
+    persistClinicData({ postTreatmentTickets: updated });
+  };
+
+  const handleUpdateChurnCustomer = (updatedCust: ChurnRiskCustomer) => {
+    const updated = churnCustomers.map(c => c.id === updatedCust.id ? updatedCust : c);
+    setChurnCustomers(updated);
+    persistClinicData({ churnCustomers: updated });
+  };
+
+  const handleUpdateLoyaltyMember = (updatedMember: LoyaltyMember) => {
+    const updated = loyaltyMembers.map(m => m.id === updatedMember.id ? updatedMember : m);
+    setLoyaltyMembers(updated);
+    persistClinicData({ loyaltyMembers: updated });
+  };
+
+  const handleAddReferral = (record: ReferralRecord) => {
+    const updatedRef = [record, ...referralRecords];
+    setReferralRecords(updatedRef);
+    const updatedMembers = loyaltyMembers.map(m => {
+      if (m.referralCode === record.referrerCode) {
+        return {
+          ...m,
+          referralCount: m.referralCount + 1,
+          referralRewardsEarned: m.referralRewardsEarned + record.rewardValue,
+          points: m.points + Math.floor(record.rewardValue / 1000)
+        };
+      }
+      return m;
+    });
+    setLoyaltyMembers(updatedMembers);
+    persistClinicData({ referralRecords: updatedRef, loyaltyMembers: updatedMembers });
+  };
+
+  const handleCreateBookingFromLandingOrLead = (bookingData: Partial<Booking>) => {
+    const newBooking: Booking = {
+      id: `booking-${Date.now()}`,
+      customerCode: bookingData.customerCode || `KH-${Math.floor(1000 + Math.random() * 9000)}`,
+      customerName: bookingData.customerName || 'Khách hàng mới',
+      customerPhone: bookingData.customerPhone || '0900000000',
+      serviceId: bookingData.serviceId || 'srv-crm',
+      serviceName: bookingData.serviceName || 'Dịch vụ Thẩm Mỹ Công Nghệ Cao',
+      date: bookingData.date || new Date().toISOString().slice(0, 10),
+      time: bookingData.time || '14:00',
+      durationMinutes: bookingData.durationMinutes || 60,
+      roomName: bookingData.roomName || 'Phòng Laser Công Nghệ Cao 1',
+      technicianName: bookingData.technicianName || 'KTV. Hoàng Thu Thảo',
+      status: 'pending',
+      channel: bookingData.channel || 'web',
+      znsReminderSent: true,
+      notes: bookingData.notes || 'Khách đặt hẹn từ phễu chuyển đổi CRM Marketing',
+      createdDate: new Date().toISOString().slice(0, 10)
+    };
+    const updated = [newBooking, ...clinicBookings];
+    setClinicBookings(updated);
+    persistClinicData({ bookings: updated });
+  };
+
   // --- Render ---
   if (isLoading) {
     return (
@@ -1034,6 +1364,66 @@ const App: React.FC = () => {
             onDeleteTour={handleDeleteTour}
             onSavePayroll={handleSavePayroll}
             onBatchUpdatePayroll={handleBatchUpdatePayroll}
+          />
+        )}
+
+        {view === 'smart_booking' && (
+          <SmartBookingManagement
+            bookings={clinicBookings}
+            rooms={clinicRooms}
+            staffList={staffList}
+            services={services}
+            onSaveBooking={handleSaveBooking}
+            onUpdateStatus={handleUpdateBookingStatus}
+            onSendZnsReminder={handleSendZnsReminder}
+          />
+        )}
+
+        {view === 'emr' && (
+          <EMRManagement
+            medicalRecords={medicalRecords}
+            staffList={staffList}
+            tips={highTechTips}
+            onSaveRecord={handleSaveMedicalRecord}
+            onDeductTipShots={handleDeductTipShots}
+          />
+        )}
+
+        {view === 'crm_automation' && (
+          <CRMAutomation
+            automatedMsgs={automatedMsgs}
+            cycleAlerts={cycleAlerts}
+            chatMessages={chatMessages}
+            bookings={clinicBookings}
+            marketingLeads={marketingLeads}
+            dripCampaigns={dripCampaigns}
+            postTreatmentTickets={postTreatmentTickets}
+            churnCustomers={churnCustomers}
+            loyaltyMembers={loyaltyMembers}
+            referralRecords={referralRecords}
+            onSendMessage={handleSendAutomatedMsg}
+            onSendChatReply={handleSendChatReply}
+            onTriggerCycleReminder={handleTriggerCycleReminder}
+            onUpdateLead={handleUpdateLead}
+            onAddLead={handleAddLead}
+            onUpdateDripCampaign={handleUpdateDripCampaign}
+            onUpdatePostTreatmentTicket={handleUpdatePostTreatmentTicket}
+            onUpdateChurnCustomer={handleUpdateChurnCustomer}
+            onUpdateLoyaltyMember={handleUpdateLoyaltyMember}
+            onAddReferral={handleAddReferral}
+            onCreateBookingFromLanding={handleCreateBookingFromLandingOrLead}
+          />
+        )}
+
+        {view === 'smart_clinic_hardware' && (
+          <SmartClinicHardware
+            iotDevices={iotDevices}
+            highTechTips={highTechTips}
+            skinReports={skinReports}
+            medicalRecords={medicalRecords}
+            onSyncSkinToEMR={handleSyncSkinToEMR}
+            onSaveTip={handleSaveHighTechTip}
+            onUpdateDevice={handleUpdateIoTDevice}
           />
         )}
       </main>
