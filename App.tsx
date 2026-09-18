@@ -1119,26 +1119,30 @@ const App: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    // AI logic & lead scoring evaluation
+    // Conversational logic as authentic clinic consultant (Thảo My)
     const lower = userText.toLowerCase();
-    let replyText = 'Dạ Wellness Clinic xin chào quý khách! Hệ thống đã ghi nhận nhu cầu của quý khách và sẽ kết nối bác sĩ chuyên khoa da liễu hỗ trợ ngay ạ.';
+    let replyText = 'Dạ em cảm ơn chị đã nhắn tin cho Wellness Clinic ạ! Em đã lưu thông tin và sẽ gửi Bác sĩ Da liễu trưởng khoa xem trước tình trạng của mình để tư vấn phác đồ chuẩn xác nhất cho chị nha. Chị cho em xin số điện thoại để tiện trao đổi thêm nhé ạ!';
     let leadScore: 'Hot' | 'Warm' | 'Cold' = 'Warm';
     let suggestedService = 'Tư Vấn Da Liễu';
 
-    if (lower.includes('nám') || lower.includes('tàn nhang') || lower.includes('melasma')) {
-      replyText = 'Chào bạn! Với tình trạng nám và sắc tố, Wellness Clinic đang ứng dụng công nghệ Laser PicoWay Picosecond chuẩn FDA Hoa Kỳ. Tia laser phá vỡ hạt sắc tố thành siêu vi điểm mà không gây bỏng rát hay tổn thương biểu bì. Bạn có muốn đặt lịch soi da AI 3D miễn phí cùng Bác sĩ CKI không ạ?';
+    if (lower.includes('nám') || lower.includes('tàn nhang') || lower.includes('melasma') || lower.includes('đồi mồi')) {
+      replyText = 'Dạ chị ơi, với tình trạng nám mảng hay tàn nhang, bên em đang dùng công nghệ Laser PicoWay Picosecond chuyển giao chính hãng từ Hoa Kỳ chị ạ. Tia laser phát xung cực ngắn tính bằng một phần nghìn tỷ giây, giúp tán vụn sắc tố melanin thành các hạt siêu nhỏ tự đào thải mà hoàn toàn không gây bỏng rát hay phải nghỉ dưỡng đâu ạ. Chị cho em xin số điện thoại hoặc khung giờ rảnh, em mời Bác sĩ CKI bên em soi da AI 3D và lên phác đồ miễn phí cho chị nhé!';
       leadScore = 'Hot';
       suggestedService = 'Laser PicoWay Trị Nám';
-    } else if (lower.includes('hifu') || lower.includes('nâng cơ') || lower.includes('chảy xệ') || lower.includes('trẻ hóa')) {
-      replyText = 'Dạ công nghệ HIFU Ultraformer MPT thế giới mới tại Wellness sử dụng sóng siêu âm hội tụ vi điểm đa tầng (1.5mm - 3.0mm - 4.5mm) giúp săn chắc cơ SMAS và thon gọn viền hàm tức thì chỉ sau 1 lần làm duy nhất. Giá gói đang ưu đãi giảm 40% trong tháng này ạ!';
+    } else if (lower.includes('hifu') || lower.includes('nâng cơ') || lower.includes('chảy xệ') || lower.includes('trẻ hóa') || lower.includes('nọng')) {
+      replyText = 'Dạ chị ơi, công nghệ Nâng cơ HIFU Ultraformer MPT bên em đang được rất nhiều khách hàng khen ngợi ạ! Máy tác động sóng siêu âm hội tụ vi điểm sâu tận lớp cân cơ SMAS (tương đương phẫu thuật căng da nhưng không đụng dao kéo), giúp thon gọn viền hàm và mờ rãnh cười ngay sau 1 buổi 60 phút. Trong tháng này bên em đang có suất trải nghiệm giảm 40%, chị có muốn em giữ một suất cho chị tuần này không ạ?';
       leadScore = 'Hot';
       suggestedService = 'HIFU Ultraformer MPT';
-    } else if (lower.includes('đặt lịch') || lower.includes('hôm nay') || lower.includes('mai') || lower.includes('sdt') || lower.includes('số điện thoại')) {
-      replyText = 'Dạ tuyệt vời ạ! Em đã lưu thông tin và chuyển ngay cho Bộ phận Chăm sóc khách hàng gọi lại sau 5 phút để xác nhận lịch hẹn và chuẩn bị phòng chuyên khoa cho chị nhé!';
+    } else if (lower.includes('đặt lịch') || lower.includes('hôm nay') || lower.includes('mai') || lower.includes('sdt') || lower.includes('số điện thoại') || /\d{9,11}/.test(lower)) {
+      replyText = 'Dạ em cảm ơn chị rất nhiều ạ! Em đã ghi nhận lịch của chị rồi, em sẽ liên hệ lại ngay trong 3-5 phút tới để xác nhận giờ đến, đồng thời chuẩn bị phòng điều trị chuyên khoa và phân công KTV trưởng đón tiếp chị thật chu đáo nhé ạ!';
       leadScore = 'Hot';
-      suggestedService = 'Đặt Lịch Hẹn Ngay';
-    } else if (lower.includes('giá') || lower.includes('bao nhiêu') || lower.includes('bảng giá')) {
-      replyText = 'Dạ bảng giá các dịch vụ công nghệ cao tại Wellness dao động từ 1.200.000đ - 18.000.000đ tùy theo cấp độ phác đồ. Hiện đang có chương trình trải nghiệm buổi đầu giảm tới 50% ạ.';
+      suggestedService = 'Chốt Hẹn Thăm Khám';
+    } else if (lower.includes('sẹo') || lower.includes('rỗ') || lower.includes('mụn')) {
+      replyText = 'Dạ với tình trạng sẹo rỗ hoặc mụn viêm, Bác sĩ bên em sẽ kết hợp bóc tách đáy sẹo xơ cứng cùng Laser Fractional CO2 và tinh chất tái tạo biểu bì PRF. Thông thường sau 2-3 buổi đáy sẹo đã đầy lên từ 60-80% rồi ạ. Chị ghé em soi da kiểm tra đáy sẹo trước nhé, bên em đang miễn phí khám da đó ạ!';
+      leadScore = 'Warm';
+      suggestedService = 'Trị Sẹo Rỗ & Mụn';
+    } else if (lower.includes('giá') || lower.includes('bao nhiêu') || lower.includes('bảng giá') || lower.includes('chi phí')) {
+      replyText = 'Dạ về chi phí, bên em luôn tư vấn rõ ràng và minh bạch theo từng cấp độ da sau khi Bác sĩ soi da chị nhé. Gói chăm sóc da chuyên sâu chỉ từ 1.200.000đ, còn các liệu trình công nghệ cao như PicoWay hay HIFU bên em đang có E-Voucher ưu đãi 500.000đ - 1.000.000đ cho khách trải nghiệm buổi đầu tiên ạ. Chị để lại số Zalo, em gửi bảng giá chi tiết kèm hình ảnh thực tế khách đã làm cho chị tham khảo nha!';
       leadScore = 'Warm';
       suggestedService = 'Báo Giá Phác Đồ';
     }

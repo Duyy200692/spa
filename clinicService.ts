@@ -645,14 +645,14 @@ export const DEFAULT_TREATMENT_CYCLE_ALERTS: TreatmentCycleAlert[] = [
 ];
 
 // ============================================================
-// 9. AI CHATBOT INITIAL CONVERSATION
+// 9. CONVERSATIONAL CONSULTANT (AUTHENTIC CLINIC SPECIALIST)
 // ============================================================
 
 export const DEFAULT_AI_CHAT_MESSAGES: AiChatMessage[] = [
   {
     id: 'chat-1',
     sender: 'ai',
-    text: 'Xin chào! Tôi là Trợ Lý AI Thẩm Mỹ của Wellness Clinic. Tôi có thể tư vấn phác đồ điều trị da liễu, tra cứu bảng giá, phân tích tình trạng da hoặc giúp bạn kết nối Bác sĩ chuyên khoa ngay lập tức. Bạn đang quan tâm đến dịch vụ nào?',
+    text: 'Dạ em chào chị ạ! Em là Thảo My - Chuyên viên tư vấn da liễu tại Viện Thẩm Mỹ Wellness. Rất vui được hỗ trợ chị hôm nay! Hiện tại làn da của mình đang gặp vấn đề gì hay chị đang quan tâm đến liệu trình nào (trị nám, nâng cơ hay sẹo rỗ) để em gửi phác đồ và ưu đãi riêng cho chị ạ?',
     timestamp: '09:00'
   }
 ];

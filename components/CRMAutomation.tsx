@@ -34,7 +34,8 @@ import {
   AlertTriangle,
   Stethoscope,
   HeartPulse,
-  Check
+  Check,
+  UserCheck
 } from 'lucide-react';
 import Modal from './shared/Modal';
 
@@ -120,8 +121,9 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
   const [refRefereePhone, setRefRefereePhone] = useState('');
   const [refService, setRefService] = useState('Nâng Cơ Xóa Nhăn HIFU MPT');
 
-  // AI chat input
+  // Chat input & typing simulation state
   const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   // Filtered Leads
   const filteredLeads = useMemo(() => {
@@ -252,11 +254,16 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
     alert(`Đã gửi tin nhắn ${campChannel} đến khách hàng ${campCustName} thành công!`);
   };
 
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    onSendChatReply(chatInput.trim());
+  const handleSendChat = (e?: React.FormEvent, customText?: string) => {
+    if (e) e.preventDefault();
+    const text = customText || chatInput;
+    if (!text.trim()) return;
+    setIsTyping(true);
+    onSendChatReply(text.trim());
     setChatInput('');
+    setTimeout(() => {
+      setIsTyping(false);
+    }, 600);
   };
 
   // Handle Churn Winback Action
@@ -463,8 +470,8 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Bot className="w-4 h-4" />
-          AI Advisor &amp; CSAT Đánh Giá
+          <UserCheck className="w-4 h-4" />
+          Tư Vấn Khách Hàng 1-1 (Trực Tuyến) &amp; CSAT
         </button>
       </div>
 
@@ -1400,69 +1407,145 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left: Chat Simulator */}
-            <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col h-[560px]">
-              <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#D97A7D] text-white flex items-center justify-center font-bold">
-                    <Bot className="w-5 h-5" />
+            {/* Left: Conversational Consultant (Human-Like 1-1 Chat) */}
+            <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col h-[590px]">
+              {/* Specialist Profile Header */}
+              <div className="p-3.5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#693B4E] via-[#8B4F58] to-[#D97A7D] text-white flex items-center justify-center font-extrabold text-sm shadow">
+                      TM
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-gray-900">AI Clinic Advisor (Trợ Lý Thẩm Mỹ 24/7)</h4>
-                    <span className="text-[11px] text-emerald-600 flex items-center gap-1 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Đang đồng bộ trên Fanpage &amp; Zalo OA
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-gray-900">Thảo My - Chuyên Viên Tư Vấn Da Liễu</h4>
+                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-800 rounded-full">
+                        Chuyên khoa Laser &amp; HIFU
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 flex items-center gap-1 font-medium mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Đang trực tuyến • Phản hồi ngay (Đồng bộ Fanpage &amp; Zalo OA)
                     </span>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">Model: Gemini 2.5 Aesthetic Pro</span>
+                <div className="hidden sm:flex items-center gap-1.5 bg-rose-50 text-rose-800 border border-rose-200/80 px-2.5 py-1 rounded-lg text-[11px] font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D97A7D]" />
+                  <span>Trực Tiếp 1-1 Với Khách Hàng</span>
+                </div>
+              </div>
+
+              {/* Discreet Manager Mode Explanation */}
+              <div className="p-2 bg-gradient-to-r from-amber-50/80 to-rose-50/60 border-b border-rose-100/70 text-[11px] text-amber-900 flex items-center justify-between px-4">
+                <span>
+                  💡 <strong>Cơ chế Silent AI:</strong> Khách hàng trò chuyện hoàn toàn tự nhiên như đang nhắn tin với Chuyên viên Thảo My. Hệ thống AI âm thầm chấm điểm Lead (Hot/Warm) để Telesales tiếp nhận.
+                </span>
+                <span className="text-gray-400 font-mono text-[10px] hidden md:inline">Mode: Natural Human Touch</span>
+              </div>
+
+              {/* Quick Suggestion Prompts for Testing */}
+              <div className="px-4 py-2 bg-gray-50/70 border-b border-gray-100 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+                <span className="text-gray-400 font-medium whitespace-nowrap text-[10px]">Câu hỏi mẫu:</span>
+                <button
+                  type="button"
+                  onClick={() => handleSendChat(undefined, 'Nám gò má dùng laser gì, giá bao nhiêu?')}
+                  className="px-2.5 py-1 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-700 border border-gray-200 hover:border-rose-200 rounded-full font-medium whitespace-nowrap transition cursor-pointer shadow-2xs"
+                >
+                  💬 Nám gò má dùng laser gì?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendChat(undefined, 'Bắn HIFU nâng cơ có đau không và giữ được bao lâu?')}
+                  className="px-2.5 py-1 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-700 border border-gray-200 hover:border-rose-200 rounded-full font-medium whitespace-nowrap transition cursor-pointer shadow-2xs"
+                >
+                  💬 Bắn HIFU có đau không?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendChat(undefined, 'Em muốn đặt lịch soi da ngày mai sđt 0918 333 444')}
+                  className="px-2.5 py-1 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-700 border border-gray-200 hover:border-rose-200 rounded-full font-medium whitespace-nowrap transition cursor-pointer shadow-2xs"
+                >
+                  💬 Đặt lịch mai (0918 333 444)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendChat(undefined, 'Tư vấn giúp em chi phí bóc tách sẹo rỗ')}
+                  className="px-2.5 py-1 bg-white hover:bg-rose-50 text-gray-700 hover:text-rose-700 border border-gray-200 hover:border-rose-200 rounded-full font-medium whitespace-nowrap transition cursor-pointer shadow-2xs"
+                >
+                  💬 Chi phí bóc tách sẹo rỗ?
+                </button>
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3">
+              <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
                 {chatMessages.map(m => (
                   <div
                     key={m.id}
                     className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-md p-3.5 rounded-2xl text-xs leading-relaxed ${
-                        m.sender === 'user'
-                          ? 'bg-[#5C3A3A] text-white rounded-tr-none'
-                          : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200'
-                      }`}
-                    >
-                      <div className="whitespace-pre-line">{m.text}</div>
-                      {m.leadScore && (
-                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between text-[10px]">
-                          <span className="font-semibold text-gray-500">Phân loại khách hàng:</span>
-                          <span className={`px-2 py-0.5 rounded font-bold flex items-center gap-1 ${
-                            m.leadScore === 'Hot' ? 'bg-rose-100 text-rose-700' : m.leadScore === 'Warm' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {m.leadScore === 'Hot' ? <Flame className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                            Lead {m.leadScore} ({m.suggestedService || 'Cần gọi tư vấn'})
-                          </span>
+                    <div className="flex gap-2.5 max-w-lg">
+                      {m.sender === 'ai' && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#693B4E] to-[#D97A7D] text-white flex-shrink-0 flex items-center justify-center font-extrabold text-xs mt-1 shadow-xs">
+                          TM
                         </div>
                       )}
+                      <div>
+                        <div className={`text-[10px] text-gray-400 mb-1 ${m.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                          {m.sender === 'user' ? 'Khách hàng' : 'Thảo My (Chuyên viên tư vấn)'} • {m.timestamp}
+                        </div>
+                        <div
+                          className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                            m.sender === 'user'
+                              ? 'bg-[#5C3A3A] text-white rounded-tr-none shadow-xs'
+                              : 'bg-gradient-to-b from-white to-rose-50/30 text-gray-800 rounded-tl-none border border-gray-200/80 shadow-xs'
+                          }`}
+                        >
+                          <div className="whitespace-pre-line">{m.text}</div>
+                          {m.leadScore && (
+                            <div className="mt-2.5 pt-2 border-t border-gray-200/60 flex items-center justify-between text-[10px]">
+                              <span className="text-gray-400 font-medium">Ghi nhận nội bộ:</span>
+                              <span className={`px-2 py-0.5 rounded font-bold flex items-center gap-1 ${
+                                m.leadScore === 'Hot' ? 'bg-rose-100 text-rose-700 border border-rose-200' : m.leadScore === 'Warm' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                              }`}>
+                                {m.leadScore === 'Hot' ? <Flame className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
+                                Lead {m.leadScore} ({m.suggestedService || 'Cần gọi tư vấn'})
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
+
+                {isTyping && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 italic pl-10">
+                    <div className="flex gap-1 items-center">
+                      <span className="w-1.5 h-1.5 bg-[#D97A7D] rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-[#D97A7D] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                      <span className="w-1.5 h-1.5 bg-[#D97A7D] rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                    </div>
+                    <span>Thảo My đang soạn câu trả lời...</span>
+                  </div>
+                )}
               </div>
 
               {/* Chat Input */}
-              <form onSubmit={handleSendChat} className="p-3 border-t border-gray-200 flex items-center gap-2">
+              <form onSubmit={handleSendChat} className="p-3 border-t border-gray-200 flex items-center gap-2 bg-white rounded-b-2xl">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
-                  placeholder="Nhập câu hỏi tư vấn da liễu hoặc đóng vai khách hàng..."
+                  placeholder="Nhắn tin cho Chuyên viên Thảo My (Hỏi về nám, nâng cơ, giá dịch vụ, đặt hẹn...)"
                   className="flex-1 px-3.5 py-2 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D97A7D]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#D97A7D] hover:bg-[#c76b6e] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-[#D97A7D] hover:bg-[#c76b6e] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  Gửi
+                  Gửi Tin
                 </button>
               </form>
             </div>
