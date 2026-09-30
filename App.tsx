@@ -187,13 +187,17 @@ const App: React.FC = () => {
 
     const seedCloudData = async () => {
       try {
-        // 1. Check & Seed Users
+        // 1. Check & Seed Users (Guarantee Doctor, Management, Marketing, etc. all exist)
         const usersSnap = await getDocs(collection(db, 'users'));
-        if (usersSnap.empty) {
+        const existingIds = new Set(usersSnap.docs.map(d => d.id));
+        const existingUsernames = new Set(usersSnap.docs.map(d => (d.data().username || '').toLowerCase()));
+        
+        const missingUsers = DEFAULT_USERS.filter(du => !existingIds.has(du.id) && !existingUsernames.has(du.username.toLowerCase()));
+        if (missingUsers.length > 0) {
           const batch = writeBatch(db);
-          DEFAULT_USERS.forEach(user => {
+          missingUsers.forEach(user => {
             const docRef = doc(db, 'users', user.id);
-            batch.set(docRef, user);
+            batch.set(docRef, user, { merge: true });
           });
           await batch.commit();
         }
@@ -537,6 +541,29 @@ const App: React.FC = () => {
   };
 
   // --- Actions ---
+  const handleSyncDefaultUsersToCloud = async () => {
+    try {
+      if (isCloudConnected) {
+        const batch = writeBatch(db);
+        DEFAULT_USERS.forEach(user => {
+          const docRef = doc(db, 'users', user.id);
+          batch.set(docRef, user, { merge: true });
+        });
+        await batch.commit();
+      }
+      
+      const existingUsernames = new Set(users.map(u => u.username.toLowerCase()));
+      const missing = DEFAULT_USERS.filter(du => !existingUsernames.has(du.username.toLowerCase()));
+      if (missing.length > 0) {
+        const updated = [...users, ...missing];
+        setUsers(updated);
+        persistAppData({ users: updated });
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'users');
+    }
+  };
+
   const addUser = async (newUserData: Omit<User, 'id'>) => {
     const newId = `user-${Date.now()}`;
     const newUser: User = { ...newUserData, id: newId };
@@ -1495,6 +1522,7 @@ const App: React.FC = () => {
                 onAddUser={addUser}
                 onDeleteUser={deleteUser}
                 onSwitchRole={handleSwitchRole}
+                onSyncDefaultUsers={handleSyncDefaultUsersToCloud}
               />
             )}
 

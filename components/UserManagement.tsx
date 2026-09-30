@@ -2,22 +2,31 @@ import React, { useState } from 'react';
 import { User, Role } from '../types';
 import Button from './shared/Button';
 import { ROLE_CONFIGS, getRoleConfig } from '../permissions';
-import { ShieldCheck, UserPlus, Trash2, Shield } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, Shield, CloudUpload, CheckCircle2 } from 'lucide-react';
 
 interface UserManagementProps {
   users: User[];
   onAddUser: (user: Omit<User, 'id'>) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
   onSwitchRole?: (role: Role) => void;
+  onSyncDefaultUsers?: () => Promise<void>;
 }
 
-const UserManagement: React.FC<UserManagementProps> = ({ users, onAddUser, onDeleteUser, onSwitchRole }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ 
+  users, 
+  onAddUser, 
+  onDeleteUser, 
+  onSwitchRole,
+  onSyncDefaultUsers 
+}) => {
   const [newUser, setNewUser] = useState({
     name: '',
     username: '',
     password: '',
     role: Role.Doctor,
   });
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,10 +65,41 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onAddUser, onDel
 
       {/* List of Users */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <h3 className="text-xl font-serif font-bold text-[#5C3A3A] flex items-center gap-2">
             <span>👥 Danh Sách Thành Viên & Phân Quyền Hiện Tại</span>
           </h3>
+
+          {onSyncDefaultUsers && (
+            <button
+              type="button"
+              disabled={isSyncing}
+              onClick={async () => {
+                setIsSyncing(true);
+                try {
+                  await onSyncDefaultUsers();
+                  setSyncSuccess(true);
+                  setTimeout(() => setSyncSuccess(false), 4000);
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer hover:scale-[1.02]"
+              title="Đảm bảo tài khoản Bác sĩ và tất cả vai trò đều được tạo trên Firebase"
+            >
+              {syncSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                  <span>Đã Nạp & Đồng Bộ Bác Sĩ Lên Firebase!</span>
+                </>
+              ) : (
+                <>
+                  <CloudUpload className={`w-4 h-4 ${isSyncing ? 'animate-bounce' : ''}`} />
+                  <span>{isSyncing ? 'Đang nạp dữ liệu...' : '☁️ Nạp Đầy Đủ Bác Sĩ & Các Vai Trò Lên Firebase'}</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-xs overflow-hidden border border-gray-200">
