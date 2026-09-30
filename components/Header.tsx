@@ -38,7 +38,7 @@ const NAV_ITEMS: { id: AppView; label: string; icon: string; category: 'clinical
   // Operations & Admin Group
   { id: 'inventory', label: 'Kho & Vật Tư', icon: '📦', category: 'admin' },
   { id: 'hr', label: 'Nhân sự & Lương', icon: '👥', category: 'admin' },
-  { id: 'users', label: 'Users', icon: '⚙️', category: 'admin' },
+  { id: 'users', label: 'Phân Quyền & Users', icon: '⚙️', category: 'admin' },
 ];
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -425,16 +425,29 @@ const Header: React.FC<HeaderProps> = ({
             </table>
           </div>
 
-          <div className="flex justify-between items-center pt-2">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2 border-t border-gray-100">
             <span className="text-xs text-gray-500">
-              💡 Bạn có thể chuyển đổi nhanh vai trò bằng dropdown ở góc trên bên phải để kiểm tra giao diện từng phân quyền.
+              💡 Bạn có thể chuyển đổi nhanh vai trò để kiểm tra giao diện hoặc vào quản lý tài khoản để cấp quyền cho nhân sự mới.
             </span>
-            <button
-              onClick={() => setIsPermissionMatrixOpen(false)}
-              className="px-4 py-2 bg-[#D97A7D] text-white rounded-lg text-xs font-semibold hover:bg-[#c8696c] transition-colors shadow-2xs"
-            >
-              Đóng lại
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser.role === Role.Management && (
+                <button
+                  onClick={() => {
+                    setIsPermissionMatrixOpen(false);
+                    onViewChange('users');
+                  }}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-colors shadow-2xs flex items-center gap-1"
+                >
+                  <span>⚙️ Quản Lý Cấp Tài Khoản</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsPermissionMatrixOpen(false)}
+                className="px-4 py-1.5 bg-[#D97A7D] text-white rounded-lg text-xs font-semibold hover:bg-[#c8696c] transition-colors shadow-2xs"
+              >
+                Đóng lại
+              </button>
+            </div>
           </div>
         </div>
       </Modal>
