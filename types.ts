@@ -1,10 +1,11 @@
 
 export enum Role {
-  Product = 'Product',
-  Marketing = 'Marketing',
   Management = 'Management',
+  Doctor = 'Doctor',
+  Marketing = 'Marketing',
   Reception = 'Reception',
-  Accountant = 'Accountant', 
+  Accountant = 'Accountant',
+  Product = 'Product',
 }
 
 export interface User {

@@ -85,6 +85,8 @@ export const DEFAULT_ROOMS: ClinicRoom[] = [
 // 2. DEFAULT SMART BOOKINGS
 // ============================================================
 
+const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
 export const DEFAULT_BOOKINGS: Booking[] = [
   {
     id: 'bk-1001',
@@ -94,11 +96,11 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     serviceId: 'pico-nam',
     serviceName: 'Laser PicoWay Trị Nám Chân Sâu',
     channel: 'zalo',
-    date: '2026-09-18',
+    date: getTodayDateString(),
     time: '09:30',
     durationMinutes: 60,
-    technicianId: 'staff-01',
-    technicianName: 'Nguyễn Thị Mai (KTV Trưởng)',
+    technicianId: 'staff-bs-01',
+    technicianName: 'BS. CKI Nguyễn Mai',
     roomId: 'room-laser-01',
     roomName: 'Phòng Laser Công Nghệ Cao 01',
     status: 'in_progress',
@@ -106,7 +108,7 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     depositAmount: 500000,
     znsReminderSent: true,
     csatSent: false,
-    createdDate: '2026-09-15'
+    createdDate: getTodayDateString()
   },
   {
     id: 'bk-1002',
@@ -116,11 +118,11 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     serviceId: 'co2-seo',
     serviceName: 'Fractional CO2 Laser & Cắt Đáy Sẹo',
     channel: 'web',
-    date: '2026-09-18',
+    date: getTodayDateString(),
     time: '11:00',
     durationMinutes: 90,
-    technicianId: 'staff-02',
-    technicianName: 'Lê Thu Trang',
+    technicianId: 'staff-bs-02',
+    technicianName: 'BS. Lê Thanh Vân',
     roomId: 'room-laser-01',
     roomName: 'Phòng Laser Công Nghệ Cao 01',
     status: 'confirmed',
@@ -128,7 +130,7 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     depositAmount: 1000000,
     znsReminderSent: true,
     csatSent: false,
-    createdDate: '2026-09-16'
+    createdDate: getTodayDateString()
   },
   {
     id: 'bk-1003',
@@ -138,11 +140,11 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     serviceId: 'hifu-mpt',
     serviceName: 'Nâng Cơ Xóa Nhăn HIFU Ultraformer MPT',
     channel: 'facebook',
-    date: '2026-09-18',
+    date: getTodayDateString(),
     time: '14:00',
     durationMinutes: 90,
-    technicianId: 'staff-01',
-    technicianName: 'Nguyễn Thị Mai (KTV Trưởng)',
+    technicianId: 'staff-bs-01',
+    technicianName: 'BS. CKI Nguyễn Mai',
     roomId: 'room-hifu-02',
     roomName: 'Phòng Trẻ Hóa HIFU & RF 02',
     status: 'confirmed',
@@ -150,7 +152,7 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     depositAmount: 2000000,
     znsReminderSent: true,
     csatSent: false,
-    createdDate: '2026-09-17'
+    createdDate: getTodayDateString()
   },
   {
     id: 'bk-1004',
@@ -160,18 +162,18 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     serviceId: 'hf-platinum',
     serviceName: 'Hydrafacial Platinum Thải Độc & Cấp Ẩm',
     channel: 'app',
-    date: '2026-09-18',
+    date: getTodayDateString(),
     time: '15:30',
     durationMinutes: 90,
-    technicianId: 'staff-03',
-    technicianName: 'Trần Kim Ngân',
+    technicianId: 'staff-01',
+    technicianName: 'Nguyễn Thị Mai (KTV Trưởng)',
     roomId: 'room-hydra-vip',
     roomName: 'Phòng Hydrafacial VIP 01',
     status: 'pending',
     notes: 'Khách thành viên VIP Diamond. Chuẩn bị trà thảo mộc phòng chờ.',
     znsReminderSent: false,
     csatSent: false,
-    createdDate: '2026-09-18'
+    createdDate: getTodayDateString()
   },
   {
     id: 'bk-1005',
@@ -181,18 +183,18 @@ export const DEFAULT_BOOKINGS: Booking[] = [
     serviceId: 'diode-trietlong',
     serviceName: 'Triệt Lông Diode Laser Toàn Thân',
     channel: 'walkin',
-    date: '2026-09-18',
+    date: getTodayDateString(),
     time: '16:30',
     durationMinutes: 60,
-    technicianId: 'staff-04',
-    technicianName: 'Hoàng Bảo Yến',
+    technicianId: 'staff-02',
+    technicianName: 'Lê Thu Trang',
     roomId: 'room-diode-04',
     roomName: 'Phòng Triệt Lông Diode Laser',
     status: 'confirmed',
     notes: 'Khách chu kỳ buổi thứ 4.',
     znsReminderSent: true,
     csatSent: false,
-    createdDate: '2026-09-17'
+    createdDate: getTodayDateString()
   }
 ];
 

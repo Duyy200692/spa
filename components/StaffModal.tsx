@@ -12,6 +12,7 @@ interface StaffModalProps {
 }
 
 const DEPARTMENTS = [
+  'Bác sĩ / Y khoa',
   'Kỹ thuật Spa',
   'Lễ tân',
   'Kế toán',
@@ -21,6 +22,10 @@ const DEPARTMENTS = [
 ];
 
 const POSITIONS = [
+  'Bác sĩ Chuyên Khoa Da Liễu',
+  'Bác sĩ Thẩm Mỹ & Laser',
+  'Bác sĩ Trưởng Khoa / Khám Bệnh',
+  'Bác sĩ Phẫu Thuật / CKI',
   'Kỹ thuật viên Trưởng',
   'Kỹ thuật viên Body & Facial',
   'Kỹ thuật viên Dưỡng sinh',

@@ -38,6 +38,8 @@ import {
 } from './storageService';
 import { getInitialHRData, persistHRData } from './hrService';
 import { getInitialClinicData, persistClinicData, deductShotsFromTip } from './clinicService';
+import { canAccessView, getDefaultView, getRoleConfig } from './permissions';
+import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 type View = AppView;
 
@@ -366,11 +368,9 @@ const App: React.FC = () => {
     if (user) {
       setLoggedInUser(user);
       setLoginError('');
-      if (user.role === Role.Accountant) {
-        setView('inventory');
-      } else {
-        setView('dashboard');
-      }
+      // Route user to their role-specific landing view
+      const defaultRoleView = getDefaultView(user.role);
+      setView(defaultRoleView);
     } else {
       setLoginError('Tên đăng nhập hoặc mật khẩu không đúng.');
     }
@@ -387,17 +387,32 @@ const App: React.FC = () => {
   };
 
   const handleSwitchRole = (newRole: Role) => {
-    const targetUser = users.find(u => u.role === newRole);
-    if (targetUser) {
-      setLoggedInUser(targetUser);
-      if (newRole === Role.Accountant) {
-        setView('inventory');
-      } else if (newRole !== Role.Management && view === 'users') {
-        setView('dashboard');
+    let targetUser = users.find(u => u.role === newRole);
+    if (!targetUser) {
+      targetUser = DEFAULT_USERS.find(u => u.role === newRole);
+      if (targetUser) {
+        const updated = [...users, targetUser];
+        setUsers(updated);
+        persistAppData({ users: updated });
       }
-    } else {
-      alert(`Không tìm thấy tài khoản cho vai trò ${newRole}`);
     }
+    if (!targetUser) {
+      targetUser = {
+        id: `user-${newRole.toLowerCase()}-${Date.now()}`,
+        name: newRole === Role.Doctor ? 'BS. CKI Nguyễn Mai' : `Tài khoản ${newRole}`,
+        role: newRole,
+        username: newRole.toLowerCase(),
+        password: '1'
+      };
+      const updated = [...users, targetUser];
+      setUsers(updated);
+      persistAppData({ users: updated });
+    }
+
+    setLoggedInUser(targetUser);
+    // Route user directly to their role-specific view
+    const defaultRoleView = getDefaultView(newRole);
+    setView(defaultRoleView);
   };
 
   const handleUpdateUserName = async (newName: string) => {
@@ -1305,151 +1320,181 @@ const App: React.FC = () => {
         isCloudConnected={isCloudConnected}
       />
       <main className="p-4 sm:p-6 lg:p-8">
-        {view === 'dashboard' && loggedInUser.role !== Role.Accountant && (
-          <Dashboard
-            loggedInUser={loggedInUser}
-            services={services}
-            activePromotions={activePromotions}
-            proposalPromotions={proposalPromotions}
-            onAddPromotion={addPromotion}
-            onUpdatePromotion={updatePromotion}
-            onDeletePromotion={deletePromotion}
-          />
-        )}
-        
-        {view === 'services' && loggedInUser.role !== Role.Accountant && (
-          <ServiceManagement
-            services={services}
-            onAddService={addService}
-            onUpdateService={updateService}
-            onDeleteService={deleteService}
-            onSeedSpaServices={handleForceSeedSpa}
-            currentUser={loggedInUser}
-          />
-        )}
+        {!canAccessView(loggedInUser.role, view) ? (
+          <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl shadow-sm border border-red-100 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Quyền Truy Cập Bị Giới Hạn (Access Restricted)</h3>
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              Tài khoản của bạn thuộc vai trò <strong className="text-purple-700 font-bold">{getRoleConfig(loggedInUser.role).nameVi}</strong>, không được phân quyền truy cập vào module <strong>{view.replace('_', ' ').toUpperCase()}</strong> theo chính sách bảo mật nội bộ.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <button
+                onClick={() => setView(getDefaultView(loggedInUser.role))}
+                className="px-4 py-2 bg-[#D97A7D] text-white rounded-lg text-sm font-semibold hover:bg-[#c8696c] transition-colors shadow-2xs flex items-center justify-center gap-1.5"
+              >
+                <span>Quay về trang chính của bạn</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleSwitchRole(Role.Management)}
+                className="px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-sm font-semibold hover:bg-purple-100 transition-colors"
+              >
+                👑 Chuyển sang Quản Lý (Full Quyền)
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {view === 'dashboard' && (
+              <Dashboard
+                loggedInUser={loggedInUser}
+                services={services}
+                activePromotions={activePromotions}
+                proposalPromotions={proposalPromotions}
+                onAddPromotion={addPromotion}
+                onUpdatePromotion={updatePromotion}
+                onDeletePromotion={deletePromotion}
+              />
+            )}
+            
+            {view === 'services' && (
+              <ServiceManagement
+                services={services}
+                onAddService={addService}
+                onUpdateService={updateService}
+                onDeleteService={deleteService}
+                onSeedSpaServices={handleForceSeedSpa}
+                currentUser={loggedInUser}
+              />
+            )}
 
-        {view === 'inventory' && (
-          <InventoryManagement 
-            items={inventoryItems}
-            transactions={inventoryTransactions}
-            currentUser={loggedInUser}
-            onImportItem={importInventoryItem}
-            onExportItem={exportInventoryItem}
-            onSeedData={handleForceSeedInventory}
-            onUpdateItem={updateInventoryItem}
-            auditSessions={auditSessions}
-            onCreateAudit={createAuditSession}
-            onUpdateAuditItem={updateAuditItem}
-            onFinalizeAudit={finalizeAuditSession}
-            onDeleteAudit={deleteAuditSession}
-          />
-        )}
+            {view === 'inventory' && (
+              <InventoryManagement 
+                items={inventoryItems}
+                transactions={inventoryTransactions}
+                currentUser={loggedInUser}
+                onImportItem={importInventoryItem}
+                onExportItem={exportInventoryItem}
+                onSeedData={handleForceSeedInventory}
+                onUpdateItem={updateInventoryItem}
+                auditSessions={auditSessions}
+                onCreateAudit={createAuditSession}
+                onUpdateAuditItem={updateAuditItem}
+                onFinalizeAudit={finalizeAuditSession}
+                onDeleteAudit={deleteAuditSession}
+              />
+            )}
 
-        {view === 'users' && loggedInUser.role === Role.Management && (
-          <UserManagement 
-            users={users}
-            onAddUser={addUser}
-            onDeleteUser={deleteUser}
-          />
-        )}
+            {view === 'users' && loggedInUser.role === Role.Management && (
+              <UserManagement 
+                users={users}
+                onAddUser={addUser}
+                onDeleteUser={deleteUser}
+                onSwitchRole={handleSwitchRole}
+              />
+            )}
 
-        {view === 'hr' && (
-          <HRManagement
-            currentUser={loggedInUser}
-            staffList={staffList}
-            attendanceList={attendanceList}
-            toursList={toursList}
-            payrollList={payrollList}
-            services={services}
-            onAddStaff={handleAddStaff}
-            onUpdateStaff={handleUpdateStaff}
-            onDeleteStaff={handleDeleteStaff}
-            onSaveAttendance={handleSaveAttendance}
-            onSaveTour={handleSaveTour}
-            onDeleteTour={handleDeleteTour}
-            onSavePayroll={handleSavePayroll}
-            onBatchUpdatePayroll={handleBatchUpdatePayroll}
-          />
-        )}
+            {view === 'hr' && (
+              <HRManagement
+                currentUser={loggedInUser}
+                staffList={staffList}
+                attendanceList={attendanceList}
+                toursList={toursList}
+                payrollList={payrollList}
+                services={services}
+                onAddStaff={handleAddStaff}
+                onUpdateStaff={handleUpdateStaff}
+                onDeleteStaff={handleDeleteStaff}
+                onSaveAttendance={handleSaveAttendance}
+                onSaveTour={handleSaveTour}
+                onDeleteTour={handleDeleteTour}
+                onSavePayroll={handleSavePayroll}
+                onBatchUpdatePayroll={handleBatchUpdatePayroll}
+              />
+            )}
 
-        {view === 'smart_booking' && (
-          <SmartBookingManagement
-            bookings={clinicBookings}
-            rooms={clinicRooms}
-            staffList={staffList}
-            services={services}
-            onSaveBooking={handleSaveBooking}
-            onUpdateStatus={handleUpdateBookingStatus}
-            onSendZnsReminder={handleSendZnsReminder}
-          />
-        )}
+            {view === 'smart_booking' && (
+              <SmartBookingManagement
+                bookings={clinicBookings}
+                rooms={clinicRooms}
+                staffList={staffList}
+                services={services}
+                onSaveBooking={handleSaveBooking}
+                onUpdateStatus={handleUpdateBookingStatus}
+                onSendZnsReminder={handleSendZnsReminder}
+              />
+            )}
 
-        {view === 'emr' && (
-          <EMRManagement
-            medicalRecords={medicalRecords}
-            staffList={staffList}
-            tips={highTechTips}
-            skinReports={skinReports}
-            onSaveRecord={handleSaveMedicalRecord}
-            onDeductTipShots={handleDeductTipShots}
-            onNavigateToHardware={() => setView('smart_clinic_hardware')}
-          />
-        )}
+            {view === 'emr' && (
+              <EMRManagement
+                medicalRecords={medicalRecords}
+                staffList={staffList}
+                tips={highTechTips}
+                skinReports={skinReports}
+                onSaveRecord={handleSaveMedicalRecord}
+                onDeductTipShots={handleDeductTipShots}
+                onNavigateToHardware={() => setView('smart_clinic_hardware')}
+              />
+            )}
 
-        {view === 'crm_automation' && (
-          <CRMAutomation
-            automatedMsgs={automatedMsgs}
-            cycleAlerts={cycleAlerts}
-            chatMessages={chatMessages}
-            bookings={clinicBookings}
-            marketingLeads={marketingLeads}
-            dripCampaigns={dripCampaigns}
-            postTreatmentTickets={postTreatmentTickets}
-            churnCustomers={churnCustomers}
-            loyaltyMembers={loyaltyMembers}
-            referralRecords={referralRecords}
-            onSendMessage={handleSendAutomatedMsg}
-            onSendChatReply={handleSendChatReply}
-            onTriggerCycleReminder={handleTriggerCycleReminder}
-            onUpdateLead={handleUpdateLead}
-            onAddLead={handleAddLead}
-            onUpdateDripCampaign={handleUpdateDripCampaign}
-            onUpdatePostTreatmentTicket={handleUpdatePostTreatmentTicket}
-            onUpdateChurnCustomer={handleUpdateChurnCustomer}
-            onUpdateLoyaltyMember={handleUpdateLoyaltyMember}
-            onAddReferral={handleAddReferral}
-            onCreateBookingFromLanding={handleCreateBookingFromLandingOrLead}
-          />
-        )}
+            {view === 'crm_automation' && (
+              <CRMAutomation
+                automatedMsgs={automatedMsgs}
+                cycleAlerts={cycleAlerts}
+                chatMessages={chatMessages}
+                bookings={clinicBookings}
+                marketingLeads={marketingLeads}
+                dripCampaigns={dripCampaigns}
+                postTreatmentTickets={postTreatmentTickets}
+                churnCustomers={churnCustomers}
+                loyaltyMembers={loyaltyMembers}
+                referralRecords={referralRecords}
+                onSendMessage={handleSendAutomatedMsg}
+                onSendChatReply={handleSendChatReply}
+                onTriggerCycleReminder={handleTriggerCycleReminder}
+                onUpdateLead={handleUpdateLead}
+                onAddLead={handleAddLead}
+                onUpdateDripCampaign={handleUpdateDripCampaign}
+                onUpdatePostTreatmentTicket={handleUpdatePostTreatmentTicket}
+                onUpdateChurnCustomer={handleUpdateChurnCustomer}
+                onUpdateLoyaltyMember={handleUpdateLoyaltyMember}
+                onAddReferral={handleAddReferral}
+                onCreateBookingFromLanding={handleCreateBookingFromLandingOrLead}
+              />
+            )}
 
-        {view === 'smart_clinic_hardware' && (
-          <SmartClinicHardware
-            iotDevices={iotDevices}
-            highTechTips={highTechTips}
-            skinReports={skinReports}
-            medicalRecords={medicalRecords}
-            onSyncSkinToEMR={handleSyncSkinToEMR}
-            onSaveTip={handleSaveHighTechTip}
-            onUpdateDevice={handleUpdateIoTDevice}
-            onNavigateToEMR={() => setView('emr')}
-          />
-        )}
+            {view === 'smart_clinic_hardware' && (
+              <SmartClinicHardware
+                iotDevices={iotDevices}
+                highTechTips={highTechTips}
+                skinReports={skinReports}
+                medicalRecords={medicalRecords}
+                onSyncSkinToEMR={handleSyncSkinToEMR}
+                onSaveTip={handleSaveHighTechTip}
+                onUpdateDevice={handleUpdateIoTDevice}
+                onNavigateToEMR={() => setView('emr')}
+              />
+            )}
 
-        {view === 'kiotviet_sync' && (
-          <KiotVietSyncHub
-            medicalRecords={medicalRecords}
-            inventoryItems={inventoryItems}
-            onUpdateMedicalRecords={(updated) => {
-              setMedicalRecords(updated);
-              persistClinicData({ emrRecords: updated });
-            }}
-            onUpdateInventoryItems={(updated) => {
-              setInventoryItems(updated);
-              persistAppData({ inventory: updated });
-            }}
-            onNavigateToEMR={() => setView('emr')}
-            onNavigateToInventory={() => setView('inventory')}
-          />
+            {view === 'kiotviet_sync' && (
+              <KiotVietSyncHub
+                medicalRecords={medicalRecords}
+                inventoryItems={inventoryItems}
+                onUpdateMedicalRecords={(updated) => {
+                  setMedicalRecords(updated);
+                  persistClinicData({ emrRecords: updated });
+                }}
+                onUpdateInventoryItems={(updated) => {
+                  setInventoryItems(updated);
+                  persistAppData({ inventory: updated });
+                }}
+                onNavigateToEMR={() => setView('emr')}
+                onNavigateToInventory={() => setView('inventory')}
+              />
+            )}
+          </>
         )}
       </main>
     </div>

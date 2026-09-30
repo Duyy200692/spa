@@ -61,7 +61,7 @@ const HRManagement: React.FC<HRManagementProps> = ({
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
 
   // Staff Sub-tab filters
-  const [staffStatusFilter, setStaffStatusFilter] = useState<'all' | 'active' | 'resigned' | 'technician'>('active');
+  const [staffStatusFilter, setStaffStatusFilter] = useState<'all' | 'active' | 'doctor' | 'technician' | 'resigned'>('active');
   const [staffSearch, setStaffSearch] = useState<string>('');
 
   // Modals state
@@ -98,6 +98,7 @@ const HRManagement: React.FC<HRManagementProps> = ({
       if (staffStatusFilter === 'active' && staff.status !== 'active') return false;
       if (staffStatusFilter === 'resigned' && staff.status !== 'resigned') return false;
       if (staffStatusFilter === 'technician' && (!staff.isTechnician || staff.status !== 'active')) return false;
+      if (staffStatusFilter === 'doctor' && (staff.status !== 'active' || (staff.department !== 'Bác sĩ / Y khoa' && !staff.position.toLowerCase().includes('bác sĩ')))) return false;
 
       // Filter search
       if (staffSearch.trim()) {
@@ -118,6 +119,7 @@ const HRManagement: React.FC<HRManagementProps> = ({
   const activeStaffCount = staffList.filter(s => s.status === 'active').length;
   const resignedStaffCount = staffList.filter(s => s.status === 'resigned').length;
   const technicianCount = staffList.filter(s => s.status === 'active' && s.isTechnician).length;
+  const doctorCount = staffList.filter(s => s.status === 'active' && (s.department === 'Bác sĩ / Y khoa' || s.position.toLowerCase().includes('bác sĩ'))).length;
 
   // Days in selected month
   const daysInMonth = useMemo(() => {
@@ -415,7 +417,7 @@ const HRManagement: React.FC<HRManagementProps> = ({
       {activeTab === 'staff' && (
         <div className="space-y-4">
           {/* Quick Stat Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="bg-white p-4 rounded-xl border border-pink-100 shadow-sm">
               <span className="text-xs text-gray-500 font-medium">Tổng số nhân sự</span>
               <p className="text-2xl font-bold font-serif text-[#5C3A3A] mt-1">{totalStaffCount}</p>
@@ -426,6 +428,12 @@ const HRManagement: React.FC<HRManagementProps> = ({
               <span className="text-xs text-emerald-600 font-medium">Đang làm việc</span>
               <p className="text-2xl font-bold font-serif text-emerald-700 mt-1">{activeStaffCount}</p>
               <span className="text-[11px] text-gray-400">Nhân sự hiện hữu</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-teal-100 shadow-sm">
+              <span className="text-xs text-teal-700 font-medium">🩺 Bác sĩ & Chuyên gia</span>
+              <p className="text-2xl font-bold font-serif text-teal-800 mt-1">{doctorCount}</p>
+              <span className="text-[11px] text-teal-600">Khám & Điều trị EMR</span>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-pink-100 shadow-sm">
@@ -457,14 +465,14 @@ const HRManagement: React.FC<HRManagementProps> = ({
               </button>
 
               <button
-                onClick={() => setStaffStatusFilter('resigned')}
+                onClick={() => setStaffStatusFilter('doctor')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
-                  staffStatusFilter === 'resigned'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                  staffStatusFilter === 'doctor'
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200'
                 }`}
               >
-                <span>Nhân sự đã nghỉ việc ({resignedStaffCount})</span>
+                <span>🩺 Bác sĩ ({doctorCount})</span>
               </button>
 
               <button
@@ -476,6 +484,17 @@ const HRManagement: React.FC<HRManagementProps> = ({
                 }`}
               >
                 Kỹ thuật viên ({technicianCount})
+              </button>
+
+              <button
+                onClick={() => setStaffStatusFilter('resigned')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                  staffStatusFilter === 'resigned'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                }`}
+              >
+                <span>Đã nghỉ việc ({resignedStaffCount})</span>
               </button>
 
               <button

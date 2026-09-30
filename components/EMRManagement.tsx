@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   MedicalRecord,
   TreatmentSession,
@@ -50,6 +50,12 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
 
+  // Doctor options
+  const doctorsList = useMemo(() => {
+    const docs = staffList.filter(s => s.department === 'Bác sĩ / Y khoa' || s.position.toLowerCase().includes('bác sĩ'));
+    return docs.length > 0 ? docs : staffList;
+  }, [staffList]);
+
   // New Patient Form
   const [newCustCode, setNewCustCode] = useState(`KH-${Math.floor(1000 + Math.random() * 9000)}`);
   const [newCustName, setNewCustName] = useState('');
@@ -61,11 +67,11 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
   const [newCustDiagnosis, setNewCustDiagnosis] = useState('');
   const [newCustPlan, setNewCustPlan] = useState('');
   const [newCustTotalSessions, setNewCustTotalSessions] = useState(6);
-  const [newCustDoctor, setNewCustDoctor] = useState('BS. CKI Da liễu Trần Anh Thư');
+  const [newCustDoctor, setNewCustDoctor] = useState(doctorsList[0]?.name || 'BS. CKI Nguyễn Mai');
 
   // New Treatment Session Form
   const [sessionServiceName, setSessionServiceName] = useState('');
-  const [sessionDoctorOrTech, setSessionDoctorOrTech] = useState(staffList[0]?.name || 'Nguyễn Thị Mai (KTV Trưởng)');
+  const [sessionDoctorOrTech, setSessionDoctorOrTech] = useState(doctorsList[0]?.name || 'BS. CKI Nguyễn Mai');
   const [sessionMachineName, setSessionMachineName] = useState('PicoWay Laser Picosecond');
   const [sessionWavelength, setSessionWavelength] = useState('1064nm Zoom');
   const [sessionEnergy, setSessionEnergy] = useState('2.5 J/cm²');
@@ -257,53 +263,68 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
           </div>
 
           <div className="space-y-2 max-h-[700px] overflow-y-auto pr-1">
-            {filteredRecords.map(rec => {
-              const isSelected = rec.id === selectedRecordId;
-              const percent = Math.round((rec.completedSessions / rec.totalSessions) * 100);
+            {filteredRecords.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-400 space-y-3">
+                <FolderCheck className="w-8 h-8 mx-auto text-gray-300" />
+                <p className="text-xs">Không tìm thấy bệnh án phù hợp.</p>
+                {searchQuery || selectedSkinType !== 'all' ? (
+                  <button
+                    onClick={() => { setSearchQuery(''); setSelectedSkinType('all'); }}
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-lg font-medium transition-colors"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              filteredRecords.map(rec => {
+                const isSelected = rec.id === selectedRecordId;
+                const percent = Math.round((rec.completedSessions / rec.totalSessions) * 100);
 
-              return (
-                <div
-                  key={rec.id}
-                  onClick={() => setSelectedRecordId(rec.id)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-rose-50/90 border-[#D97A7D] shadow-sm'
-                      : 'bg-white border-gray-200 hover:border-rose-200 hover:bg-gray-50/50'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                        {rec.customerName}
-                        <span className="text-[11px] font-mono font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                          {rec.customerCode}
-                        </span>
+                return (
+                  <div
+                    key={rec.id}
+                    onClick={() => setSelectedRecordId(rec.id)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-rose-50/90 border-[#D97A7D] shadow-sm'
+                        : 'bg-white border-gray-200 hover:border-rose-200 hover:bg-gray-50/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                          {rec.customerName}
+                          <span className="text-[11px] font-mono font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                            {rec.customerCode}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">📞 {rec.customerPhone}</div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">📞 {rec.customerPhone}</div>
+                      {getSkinTypeBadge(rec.skinType)}
                     </div>
-                    {getSkinTypeBadge(rec.skinType)}
-                  </div>
 
-                  <div className="text-xs text-gray-700 font-medium mt-2 line-clamp-1">
-                    📋 {rec.diagnosis}
-                  </div>
+                    <div className="text-xs text-gray-700 font-medium mt-2 line-clamp-1">
+                      📋 {rec.diagnosis}
+                    </div>
 
-                  {/* Progress Bar */}
-                  <div className="mt-3">
-                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
-                      <span>Tiến độ phác đồ</span>
-                      <span className="font-bold text-[#5C3A3A]">{rec.completedSessions}/{rec.totalSessions} buổi ({percent}%)</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#D97A7D] to-[#8B4F58] rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(100, percent)}%` }}
-                      />
+                    {/* Progress Bar */}
+                    <div className="mt-3">
+                      <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                        <span>Tiến độ phác đồ</span>
+                        <span className="font-bold text-[#5C3A3A]">{rec.completedSessions}/{rec.totalSessions} buổi ({percent}%)</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#D97A7D] to-[#8B4F58] rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, percent)}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -747,10 +768,14 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
                 <select
                   value={sessionDoctorOrTech}
                   onChange={e => setSessionDoctorOrTech(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none bg-white"
                 >
-                  <option value="BS. CKI Da liễu Trần Anh Thư">BS. CKI Da liễu Trần Anh Thư</option>
-                  {staffList.filter(s => s.status === 'active').map(s => (
+                  {doctorsList.map((s: StaffMember) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name} ({s.position})
+                    </option>
+                  ))}
+                  {staffList.filter(s => s.status === 'active' && s.department !== 'Bác sĩ / Y khoa' && !s.position.toLowerCase().includes('bác sĩ')).map(s => (
                     <option key={s.id} value={s.name}>
                       {s.name} ({s.position})
                     </option>
@@ -1002,12 +1027,17 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Bác Sĩ Điều Trị Phụ Trách</label>
-                <input
-                  type="text"
+                <select
                   value={newCustDoctor}
                   onChange={e => setNewCustDoctor(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg"
-                />
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white"
+                >
+                  {doctorsList.map((doc: StaffMember) => (
+                    <option key={doc.id} value={doc.name}>
+                      {doc.name} ({doc.position})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

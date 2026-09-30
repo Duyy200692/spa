@@ -2,11 +2,12 @@ import { User, Service, Promotion, Role, PromotionStatus, InventoryItem } from '
 
 // Default users
 export const USERS: User[] = [
-  { id: 'user-product', name: 'Team Product', role: Role.Product, username: 'product', password: '1' },
-  { id: 'user-mkt', name: 'Team Marketing', role: Role.Marketing, username: 'mkt', password: '1' },
   { id: 'user-boss', name: 'Julie Nguyễn', role: Role.Management, username: 'admin', password: '1' },
-  { id: 'user-reception', name: 'Lễ Tân', role: Role.Reception, username: 'reception', password: '1' },
-  { id: 'user-accountant', name: 'Kế Toán', role: Role.Accountant, username: 'ketoan', password: '1' },
+  { id: 'user-doctor', name: 'BS. CKI Nguyễn Mai', role: Role.Doctor, username: 'doctor', password: '1' },
+  { id: 'user-mkt', name: 'Team Marketing', role: Role.Marketing, username: 'mkt', password: '1' },
+  { id: 'user-reception', name: 'Lễ Tân Tuyết Trinh', role: Role.Reception, username: 'reception', password: '1' },
+  { id: 'user-accountant', name: 'Kế Toán Mai Hương', role: Role.Accountant, username: 'ketoan', password: '1' },
+  { id: 'user-product', name: 'Team Product', role: Role.Product, username: 'product', password: '1' },
 ];
 
 // Helper to create mock pricing

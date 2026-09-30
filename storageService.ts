@@ -78,7 +78,11 @@ export function loadLocalData<T>(key: string, defaultValue: T, legacyKey?: strin
       raw = localStorage.getItem(legacyKey);
     }
     if (!raw) return defaultValue;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(defaultValue) && defaultValue.length > 0 && Array.isArray(parsed) && parsed.length === 0) {
+      return defaultValue;
+    }
+    return parsed;
   } catch (err) {
     console.warn(`Error reading ${key} from localStorage:`, err);
     return defaultValue;
@@ -94,7 +98,12 @@ export function saveLocalData<T>(key: string, value: T): void {
 }
 
 export function getInitialAppData() {
-  const users = loadLocalData<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS, LEGACY_KEYS.USERS);
+  const storedUsers = loadLocalData<User[]>(STORAGE_KEYS.USERS, DEFAULT_USERS, LEGACY_KEYS.USERS);
+  // Ensure default roles (like Doctor, Management, Marketing, etc.) are always present even with older localStorage cache
+  const existingUsernames = new Set(storedUsers.map(u => u.username));
+  const missingDefaults = DEFAULT_USERS.filter(du => !existingUsernames.has(du.username));
+  const users = missingDefaults.length > 0 ? [...storedUsers, ...missingDefaults] : storedUsers;
+
   const services = loadLocalData<Service[]>(STORAGE_KEYS.SERVICES, DEFAULT_SERVICES, LEGACY_KEYS.SERVICES);
   const promotions = loadLocalData<Promotion[]>(STORAGE_KEYS.PROMOTIONS, DEFAULT_PROMOTIONS, LEGACY_KEYS.PROMOTIONS);
   const inventory = loadLocalData<InventoryItem[]>(STORAGE_KEYS.INVENTORY, DEFAULT_INVENTORY, LEGACY_KEYS.INVENTORY);

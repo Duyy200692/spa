@@ -12,6 +12,44 @@ export const HR_STORAGE_KEYS = {
 
 export const DEFAULT_STAFF: StaffMember[] = [
   {
+    id: 'staff-bs-01',
+    code: 'BS01',
+    name: 'BS. CKI Nguyễn Mai',
+    phone: '0912 888 999',
+    email: 'bs.nguyenmai@wellness.vn',
+    position: 'Bác sĩ Chuyên Khoa Da Liễu',
+    department: 'Bác sĩ / Y khoa',
+    isTechnician: false,
+    status: 'active',
+    joinDate: '2021-05-10',
+    baseSalary: 28000000,
+    allowance: 4000000,
+    tourRateDefault: 200000,
+    bankAccount: '1903888999001',
+    bankName: 'Techcombank',
+    citizenId: '001189001234',
+    note: 'Bác sĩ CKI Da Liễu - Thẩm mỹ nội khoa, phụ trách phác đồ Laser Pico, HIFU, Meso & đọc chỉ số VISIA.'
+  },
+  {
+    id: 'staff-bs-02',
+    code: 'BS02',
+    name: 'BS. Lê Thanh Vân',
+    phone: '0908 666 777',
+    email: 'bs.thanhvan@wellness.vn',
+    position: 'Bác sĩ Thẩm Mỹ & Laser',
+    department: 'Bác sĩ / Y khoa',
+    isTechnician: false,
+    status: 'active',
+    joinDate: '2022-09-01',
+    baseSalary: 25000000,
+    allowance: 3500000,
+    tourRateDefault: 200000,
+    bankAccount: '0071009876543',
+    bankName: 'Vietcombank',
+    citizenId: '001192002345',
+    note: 'Chuyên khoa Laser trị nám, sẹo rỗ CO2 và tiêm vi điểm trẻ hóa BAP.'
+  },
+  {
     id: 'staff-01',
     code: 'KTV01',
     name: 'Nguyễn Thị Mai',
@@ -514,7 +552,11 @@ export function computePayroll(
 
 // Initial HR data loader
 export function getInitialHRData() {
-  const staff = loadLocalData<StaffMember[]>(HR_STORAGE_KEYS.STAFF, DEFAULT_STAFF);
+  const storedStaff = loadLocalData<StaffMember[]>(HR_STORAGE_KEYS.STAFF, DEFAULT_STAFF);
+  const existingCodes = new Set(storedStaff.map(s => s.code));
+  const missingStaff = DEFAULT_STAFF.filter(ds => !existingCodes.has(ds.code));
+  const staff = missingStaff.length > 0 ? [...storedStaff, ...missingStaff] : storedStaff;
+
   const tours = loadLocalData<TechnicianTour[]>(HR_STORAGE_KEYS.TOURS, DEFAULT_TOURS);
   const attendance = loadLocalData<AttendanceRecord[]>(HR_STORAGE_KEYS.ATTENDANCE, generateInitialAttendance(staff));
   
