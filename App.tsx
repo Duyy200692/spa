@@ -14,7 +14,6 @@ import SmartBookingManagement from './components/SmartBookingManagement';
 import EMRManagement from './components/EMRManagement';
 import CRMAutomation from './components/CRMAutomation';
 import SmartClinicHardware from './components/SmartClinicHardware';
-import KiotVietSyncHub from './components/KiotVietSyncHub';
 import { 
   User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, 
   StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord,
@@ -541,29 +540,6 @@ const App: React.FC = () => {
   };
 
   // --- Actions ---
-  const handleSyncDefaultUsersToCloud = async () => {
-    try {
-      if (isCloudConnected) {
-        const batch = writeBatch(db);
-        DEFAULT_USERS.forEach(user => {
-          const docRef = doc(db, 'users', user.id);
-          batch.set(docRef, user, { merge: true });
-        });
-        await batch.commit();
-      }
-      
-      const existingUsernames = new Set(users.map(u => u.username.toLowerCase()));
-      const missing = DEFAULT_USERS.filter(du => !existingUsernames.has(du.username.toLowerCase()));
-      if (missing.length > 0) {
-        const updated = [...users, ...missing];
-        setUsers(updated);
-        persistAppData({ users: updated });
-      }
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'users');
-    }
-  };
-
   const addUser = async (newUserData: Omit<User, 'id'>) => {
     const newId = `user-${Date.now()}`;
     const newUser: User = { ...newUserData, id: newId };
@@ -1448,7 +1424,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         isCloudConnected={isCloudConnected}
       />
-      <main className="p-4 sm:p-6 lg:p-8">
+      <main className="p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
         {!canAccessView(loggedInUser.role, view) ? (
           <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl shadow-sm border border-red-100 text-center">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
@@ -1522,7 +1498,6 @@ const App: React.FC = () => {
                 onAddUser={addUser}
                 onDeleteUser={deleteUser}
                 onSwitchRole={handleSwitchRole}
-                onSyncDefaultUsers={handleSyncDefaultUsersToCloud}
               />
             )}
 
@@ -1608,22 +1583,7 @@ const App: React.FC = () => {
               />
             )}
 
-            {view === 'kiotviet_sync' && (
-              <KiotVietSyncHub
-                medicalRecords={medicalRecords}
-                inventoryItems={inventoryItems}
-                onUpdateMedicalRecords={(updated) => {
-                  setMedicalRecords(updated);
-                  persistClinicData({ emrRecords: updated });
-                }}
-                onUpdateInventoryItems={(updated) => {
-                  setInventoryItems(updated);
-                  persistAppData({ inventory: updated });
-                }}
-                onNavigateToEMR={() => setView('emr')}
-                onNavigateToInventory={() => setView('inventory')}
-              />
-            )}
+
           </>
         )}
       </main>

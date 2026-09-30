@@ -16,7 +16,6 @@ export interface RoleConfig {
     emr: 'full' | 'view_edit' | 'view' | 'none';
     crmZns: 'full' | 'view_edit' | 'view' | 'none';
     hardwareVisia: 'full' | 'view_edit' | 'view' | 'none';
-    kiotvietPos: 'full' | 'view_edit' | 'view' | 'none';
     booking: 'full' | 'view_edit' | 'view' | 'none';
     inventory: 'full' | 'view_edit' | 'view' | 'none';
     hrPayroll: 'full' | 'view_edit' | 'view' | 'none';
@@ -34,13 +33,12 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     badgeText: 'text-purple-700',
     badgeBorder: 'border-purple-200',
     icon: '👑',
-    description: 'Toàn quyền điều hành: Xem, tạo, sửa, xóa tất cả hồ sơ Bệnh án EMR, CRM & ZNS, VISIA Thiết bị, KiotViet POS, Bảng lương, Kho và Tài khoản.',
+    description: 'Toàn quyền điều hành: Xem, tạo, sửa, xóa tất cả hồ sơ Bệnh án EMR, CRM & ZNS, VISIA Thiết bị, Bảng lương, Kho và Tài khoản.',
     allowedViews: [
       'smart_booking',
       'emr',
       'crm_automation',
       'smart_clinic_hardware',
-      'kiotviet_sync',
       'dashboard',
       'services',
       'inventory',
@@ -52,7 +50,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'full',
       crmZns: 'full',
       hardwareVisia: 'full',
-      kiotvietPos: 'full',
       booking: 'full',
       inventory: 'full',
       hrPayroll: 'full',
@@ -81,7 +78,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'full',
       crmZns: 'none',
       hardwareVisia: 'full',
-      kiotvietPos: 'none',
       booking: 'full',
       inventory: 'view',
       hrPayroll: 'none',
@@ -110,7 +106,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'none',
       crmZns: 'full',
       hardwareVisia: 'none',
-      kiotvietPos: 'none',
       booking: 'view_edit',
       inventory: 'none',
       hrPayroll: 'none',
@@ -139,7 +134,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'none',
       crmZns: 'none',
       hardwareVisia: 'none',
-      kiotvietPos: 'none',
       booking: 'full',
       inventory: 'view',
       hrPayroll: 'none',
@@ -151,16 +145,15 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
   [Role.Accountant]: {
     role: Role.Accountant,
     nameVi: 'Kế Toán & Quản Lý Kho',
-    badgeTitle: 'Kế Toán (Kho, POS, Lương)',
+    badgeTitle: 'Kế Toán (Kho & Lương)',
     badgeBg: 'bg-rose-50',
     badgeText: 'text-rose-700',
     badgeBorder: 'border-rose-200',
     icon: '💰',
-    description: 'Tài chính & Vật tư: Quản lý xuất nhập tồn kho dược mỹ phẩm, kiểm kê kho, Bảng lương nhân viên, hoa hồng tour KTV và tích hợp KiotViet POS.',
+    description: 'Tài chính & Vật tư: Quản lý xuất nhập tồn kho dược mỹ phẩm, kiểm kê kho, Bảng lương nhân viên và hoa hồng tour KTV.',
     allowedViews: [
       'inventory',
       'hr',
-      'kiotviet_sync',
       'dashboard',
       'services'
     ],
@@ -169,7 +162,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'none',
       crmZns: 'none',
       hardwareVisia: 'none',
-      kiotvietPos: 'full',
       booking: 'none',
       inventory: 'full',
       hrPayroll: 'full',
@@ -198,7 +190,6 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       emr: 'none',
       crmZns: 'none',
       hardwareVisia: 'view_edit',
-      kiotvietPos: 'none',
       booking: 'none',
       inventory: 'view_edit',
       hrPayroll: 'none',
