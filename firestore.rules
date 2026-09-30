@@ -1,17 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Wellness Management System Firestore Rules
-    // Allow read/write for all internal spa operational collections
+    // Wellness Clinic & Spa Management System - Firestore Security Rules
+    
+    // 1. User accounts & RBAC profiles (Managed by Admin)
     match /users/{userId} {
       allow read, write: if true;
     }
+
+    // 2. Services & Pricing catalog
     match /services/{serviceId} {
       allow read, write: if true;
     }
+
+    // 3. Promotions & Campaigns
     match /promotions/{promoId} {
       allow read, write: if true;
     }
+
+    // 4. Inventory, Stock & Audits
     match /inventory/{itemId} {
       allow read, write: if true;
     }
@@ -21,7 +28,68 @@ service cloud.firestore {
     match /audit_sessions/{auditId} {
       allow read, write: if true;
     }
-    // Test document connection path
+
+    // 5. HR & Payroll (Staff, Attendance, Tours, Payroll)
+    match /staff/{staffId} {
+      allow read, write: if true;
+    }
+    match /attendance/{recordId} {
+      allow read, write: if true;
+    }
+    match /tours/{tourId} {
+      allow read, write: if true;
+    }
+    match /payroll/{payrollId} {
+      allow read, write: if true;
+    }
+
+    // 6. Clinical & High-Tech Medical Operations (EMR, Rooms, Bookings, VISIA, Tips, IoT)
+    match /clinic_rooms/{roomId} {
+      allow read, write: if true;
+    }
+    match /bookings/{bookingId} {
+      allow read, write: if true;
+    }
+    match /emr_records/{recordId} {
+      allow read, write: if true;
+    }
+    match /high_tech_tips/{tipId} {
+      allow read, write: if true;
+    }
+    match /iot_devices/{deviceId} {
+      allow read, write: if true;
+    }
+    match /skin_reports/{reportId} {
+      allow read, write: if true;
+    }
+
+    // 7. CRM, Automated ZNS, Marketing & Loyalty
+    match /automated_messages/{msgId} {
+      allow read, write: if true;
+    }
+    match /treatment_cycle_alerts/{alertId} {
+      allow read, write: if true;
+    }
+    match /marketing_leads/{leadId} {
+      allow read, write: if true;
+    }
+    match /drip_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+    match /post_treatment_tickets/{ticketId} {
+      allow read, write: if true;
+    }
+    match /churn_customers/{customerId} {
+      allow read, write: if true;
+    }
+    match /loyalty_members/{memberId} {
+      allow read, write: if true;
+    }
+    match /referral_records/{recordId} {
+      allow read, write: if true;
+    }
+
+    // 8. Connection test path
     match /test/{docId} {
       allow read, write: if true;
     }

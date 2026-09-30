@@ -36,8 +36,15 @@ import {
   handleFirestoreError, 
   OperationType 
 } from './storageService';
-import { getInitialHRData, persistHRData } from './hrService';
-import { getInitialClinicData, persistClinicData, deductShotsFromTip } from './clinicService';
+import { getInitialHRData, persistHRData, DEFAULT_STAFF } from './hrService';
+import { 
+  getInitialClinicData, 
+  persistClinicData, 
+  deductShotsFromTip, 
+  DEFAULT_BOOKINGS, 
+  DEFAULT_MEDICAL_RECORDS, 
+  DEFAULT_HIGH_TECH_TIPS
+} from './clinicService';
 import { canAccessView, getDefaultView, getRoleConfig } from './permissions';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 
@@ -234,6 +241,49 @@ const App: React.FC = () => {
           });
           await batch.commit();
         }
+        // 5. Check & Seed Staff
+        const staffSnap = await getDocs(collection(db, 'staff'));
+        if (staffSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_STAFF.forEach(member => {
+            const docRef = doc(db, 'staff', member.id);
+            batch.set(docRef, member);
+          });
+          await batch.commit();
+        }
+
+        // 6. Check & Seed EMR Medical Records
+        const emrSnap = await getDocs(collection(db, 'emr_records'));
+        if (emrSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_MEDICAL_RECORDS.forEach(record => {
+            const docRef = doc(db, 'emr_records', record.id);
+            batch.set(docRef, record);
+          });
+          await batch.commit();
+        }
+
+        // 7. Check & Seed Bookings
+        const bookingsSnap = await getDocs(collection(db, 'bookings'));
+        if (bookingsSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_BOOKINGS.forEach(bk => {
+            const docRef = doc(db, 'bookings', bk.id);
+            batch.set(docRef, bk);
+          });
+          await batch.commit();
+        }
+
+        // 8. Check & Seed High-Tech Tips
+        const tipsSnap = await getDocs(collection(db, 'high_tech_tips'));
+        if (tipsSnap.empty) {
+          const batch = writeBatch(db);
+          DEFAULT_HIGH_TECH_TIPS.forEach(tip => {
+            const docRef = doc(db, 'high_tech_tips', tip.id);
+            batch.set(docRef, tip);
+          });
+          await batch.commit();
+        }
       } catch (err) {
         handleFirestoreError(err, OperationType.WRITE, 'seed');
       }
@@ -255,6 +305,58 @@ const App: React.FC = () => {
           (error) => handleFirestoreError(error, OperationType.GET, 'users')
         );
         cleanups.push(unsubUsers);
+
+        const unsubStaff = onSnapshot(
+          query(collection(db, 'staff')),
+          (snapshot) => {
+            const loadedStaff = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as StaffMember));
+            if (loadedStaff.length > 0) {
+              setStaffList(loadedStaff);
+              persistHRData({ staff: loadedStaff });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'staff')
+        );
+        cleanups.push(unsubStaff);
+
+        const unsubEmr = onSnapshot(
+          query(collection(db, 'emr_records')),
+          (snapshot) => {
+            const loadedEmr = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as MedicalRecord));
+            if (loadedEmr.length > 0) {
+              setMedicalRecords(loadedEmr);
+              persistClinicData({ emrRecords: loadedEmr });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'emr_records')
+        );
+        cleanups.push(unsubEmr);
+
+        const unsubBookings = onSnapshot(
+          query(collection(db, 'bookings')),
+          (snapshot) => {
+            const loadedBookings = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Booking));
+            if (loadedBookings.length > 0) {
+              setClinicBookings(loadedBookings);
+              persistClinicData({ bookings: loadedBookings });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'bookings')
+        );
+        cleanups.push(unsubBookings);
+
+        const unsubTips = onSnapshot(
+          query(collection(db, 'high_tech_tips')),
+          (snapshot) => {
+            const loadedTips = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as HighTechTip));
+            if (loadedTips.length > 0) {
+              setHighTechTips(loadedTips);
+              persistClinicData({ tips: loadedTips });
+            }
+          },
+          (error) => handleFirestoreError(error, OperationType.GET, 'high_tech_tips')
+        );
+        cleanups.push(unsubTips);
 
         const unsubServices = onSnapshot(
           query(collection(db, 'services')),

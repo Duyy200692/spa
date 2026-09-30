@@ -7,7 +7,7 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "role": { "type": "string", "enum": ["Product", "Marketing", "Management", "Reception", "Accountant"] },
+        "role": { "type": "string", "enum": ["Doctor", "Management", "Marketing", "Reception", "Accountant", "Product"] },
         "username": { "type": "string" },
         "password": { "type": "string" }
       },
@@ -86,12 +86,44 @@
         "createdDate": { "type": "string" }
       },
       "required": ["id", "name", "month", "year", "status", "createdBy", "createdDate"]
+    },
+    "MedicalRecord": {
+      "title": "MedicalRecord",
+      "description": "Clinical patient EMR charts with high-tech laser and device parameters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerCode": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "skinType": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "treatmentPlan": { "type": "string" },
+        "totalSessions": { "type": "number" },
+        "completedSessions": { "type": "number" }
+      },
+      "required": ["id", "customerCode", "customerName", "skinType", "diagnosis"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Smart appointment scheduling and clinic room assignments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "customerName", "serviceName", "date", "time", "status"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "Wellness staff user accounts"
+      "description": "Wellness staff user accounts managed by Admin"
     },
     "/services/{serviceId}": {
       "schema": "Service",
@@ -99,19 +131,27 @@
     },
     "/promotions/{promoId}": {
       "schema": "Promotion",
-      "description": "Marketing promotion proposals"
+      "description": "Marketing promotions"
     },
     "/inventory/{itemId}": {
       "schema": "InventoryItem",
-      "description": "Warehouse inventory items"
+      "description": "Inventory stock items"
     },
     "/inventory_transactions/{transId}": {
       "schema": "InventoryTransaction",
-      "description": "Warehouse transactions history"
+      "description": "Stock movement logs"
     },
     "/audit_sessions/{auditId}": {
       "schema": "AuditSession",
-      "description": "Inventory auditing sessions"
+      "description": "Stock audit sessions"
+    },
+    "/emr_records/{recordId}": {
+      "schema": "MedicalRecord",
+      "description": "Electronic medical records"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Clinic appointments and bookings"
     }
   }
 }
