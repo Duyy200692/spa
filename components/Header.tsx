@@ -107,7 +107,6 @@ const Header: React.FC<HeaderProps> = ({
     return items.slice(0, 4);
   };
 
-  const navButtonStyle = "px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap";
   const activeStyle = "bg-[#D97A7D] text-white shadow-sm ring-1 ring-[#D97A7D]/30";
   const inactiveStyle = "text-gray-700 hover:bg-pink-50 hover:text-[#D97A7D]";
 
@@ -152,18 +151,22 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Desktop Navigation Tabs */}
-            <nav className="mt-2 flex flex-wrap items-center gap-1 border border-gray-200/80 p-1 rounded-xl bg-gray-50/90 shadow-2xs">
+            {/* Navigation Tabs (Responsive: short label on tablet, full label on desktop, horizontally scrollable) */}
+            <nav className="mt-1.5 flex items-center gap-1 border border-gray-200/80 p-1 rounded-xl bg-gray-50/90 shadow-2xs overflow-x-auto whitespace-nowrap scrollbar-none max-w-[52vw] xl:max-w-none">
               {filteredNavItems.map((item) => {
                 const isActive = currentView === item.id;
                 return (
                   <button
                     key={item.id}
                     onClick={() => onViewChange(item.id)}
-                    className={`${navButtonStyle} ${isActive ? activeStyle : inactiveStyle}`}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 shrink-0 ${
+                      isActive ? activeStyle : inactiveStyle
+                    }`}
+                    title={item.label}
                   >
                     <span>{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span className="hidden xl:inline">{item.label}</span>
+                    <span className="inline xl:hidden">{item.shortLabel || item.label}</span>
                   </button>
                 );
               })}
