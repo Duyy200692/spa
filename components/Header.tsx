@@ -152,7 +152,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Navigation Tabs (Responsive: short label on tablet, full label on desktop, horizontally scrollable) */}
-            <nav className="mt-1.5 flex items-center gap-1 border border-gray-200/80 p-1 rounded-xl bg-gray-50/90 shadow-2xs overflow-x-auto whitespace-nowrap scrollbar-none max-w-[52vw] xl:max-w-none">
+            <nav className="mt-1.5 flex items-center gap-1 border border-gray-200/80 p-1 rounded-xl bg-gray-50/90 shadow-2xs overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth max-w-[58vw] lg:max-w-[65vw] xl:max-w-none">
               {filteredNavItems.map((item) => {
                 const isActive = currentView === item.id;
                 return (
@@ -268,7 +268,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Horizontal Quick-Scroll Chips */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none bg-gray-50/70 border-t border-gray-100 text-xs whitespace-nowrap">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none scroll-smooth bg-gray-50/70 border-t border-gray-100 text-xs whitespace-nowrap">
           {filteredNavItems.map((item) => {
             const isActive = currentView === item.id;
             return (
@@ -478,7 +478,7 @@ const Header: React.FC<HeaderProps> = ({
         onClose={() => setIsPermissionMatrixOpen(false)}
         title="Ma Trận Phân Quyền Vai Trò (RBAC)"
       >
-        <div className="space-y-4 text-sm text-gray-700 max-h-[75vh] overflow-y-auto pr-1">
+        <div className="space-y-4 text-sm text-gray-700">
           <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200/70 rounded-xl">
             <h4 className="font-bold text-purple-900 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-purple-600" />

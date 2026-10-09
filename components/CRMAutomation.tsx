@@ -401,7 +401,7 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto scroll-smooth">
         <button
           onClick={() => setActiveTab('marketing_leads')}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -1478,7 +1478,7 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
+              <div className="flex-1 p-4 overflow-y-auto scroll-smooth space-y-3.5">
                 {chatMessages.map(m => (
                   <div
                     key={m.id}

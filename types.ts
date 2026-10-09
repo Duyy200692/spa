@@ -551,58 +551,5 @@ export interface ReferralRecord {
   status: 'completed' | 'pending';
 }
 
-// 4. KiotViet API Integration & Sync Hub Types
-export interface KiotVietConfig {
-  retailerName: string; // Tên gian hàng (ví dụ: wellnessclinic)
-  clientId: string; // Client ID do KiotViet cấp
-  clientSecret: string; // Client Secret
-  branchId: string; // ID chi nhánh KiotViet mặc định
-  branchName: string; // Tên chi nhánh
-  webhookSecret: string; // Khóa bảo mật Webhook KiotViet
-  autoSyncIntervalMinutes: number; // Chu kỳ tự động đồng bộ (phút)
-  syncCustomers: boolean;
-  syncInventory: boolean;
-  syncInvoices: boolean;
-  isConnected: boolean;
-  lastConnectedAt?: string;
-  accessToken?: string;
-  tokenExpiresAt?: string;
-}
-
-export interface KiotVietSyncLog {
-  id: string;
-  timestamp: string;
-  type: 'customers' | 'inventory' | 'invoices' | 'auth' | 'webhook';
-  direction: 'inbound' | 'outbound'; // inbound: KiotViet -> Wellness, outbound: Wellness -> KiotViet
-  status: 'success' | 'warning' | 'error';
-  itemCount: number;
-  message: string;
-  details?: string;
-}
-
-export interface KiotVietCustomerMapping {
-  kiotvietId: number;
-  code: string;
-  name: string;
-  contactNumber: string;
-  debt: number; // Công nợ KiotViet
-  totalInvoiced: number; // Tổng chi tiêu KiotViet
-  rewardPoints: number; // Điểm tích lũy KiotViet
-  syncedToEMR: boolean;
-  lastSync: string;
-}
-
-export interface KiotVietProductMapping {
-  kiotvietId: number;
-  code: string; // SKU
-  fullName: string;
-  categoryName: string;
-  basePrice: number;
-  cost: number;
-  onHand: number; // Tồn kho thực tế KiotViet
-  unit: string;
-  syncedToInventory: boolean;
-  lastSync: string;
-}
 
 

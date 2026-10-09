@@ -12,13 +12,81 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Quicksand:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+      /* ========================================================================= */
+      /* 1. COMPLETE SCROLLBAR ELIMINATION (NO RIGHT SCROLLBAR ON ANY PLATFORM)     */
+      /* ========================================================================= */
+      html, body, #root, * {
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE 10+, Edge */
+      }
+
+      *::-webkit-scrollbar,
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      #root::-webkit-scrollbar {
+        display: none !important;
+        width: 0px !important;
+        height: 0px !important;
+        background: transparent !important;
+      }
+
+      ::-webkit-scrollbar-thumb,
+      ::-webkit-scrollbar-track,
+      ::-webkit-scrollbar-corner {
+        display: none !important;
+        background: transparent !important;
+      }
+
+      /* ========================================================================= */
+      /* 2. ULTRA-SMOOTH TRACKPAD, TOUCH & MULTI-PLATFORM SCROLLING                */
+      /* ========================================================================= */
+      html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+
       body {
         font-family: 'Quicksand', sans-serif;
         background-color: #FEFBFB;
         color: #4A4A4A;
+        min-height: 100vh;
+        -webkit-overflow-scrolling: touch;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
+      #root {
+        min-height: 100vh;
+      }
+
       .font-serif {
         font-family: 'Playfair Display', serif;
+      }
+
+      /* Natural smooth scrolling for sub-panels and tables */
+      .overflow-y-auto,
+      .overflow-auto {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
+      .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        touch-action: pan-y pan-x;
+      }
+
+      /* Scrollbar removal utilities */
+      .scrollbar-none,
+      .scrollbar-hide {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      .scrollbar-none::-webkit-scrollbar,
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
       }
     </style>
   <script type="importmap">

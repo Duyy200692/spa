@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   MedicalRecord,
   TreatmentSession,
   StaffMember,
-  SkinAnalysisReport
+  SkinAnalysisReport,
+  InventoryItem
 } from '../types';
 import {
   FileText,
@@ -28,23 +29,45 @@ interface EMRManagementProps {
   staffList: StaffMember[];
   tips?: unknown;
   skinReports?: SkinAnalysisReport[];
+  inventoryItems?: InventoryItem[];
+  initialSelectedRecordId?: string;
   onSaveRecord: (record: MedicalRecord) => void;
   onDeductTipShots?: (machineModel: string, tipName: string, shots: number) => void;
+  onDeductConsumable?: (itemId: string, quantity: number, reason: string) => void;
   onNavigateToHardware?: () => void;
 }
+
+const MACHINE_PRESETS: Record<string, { wavelength: string; energy: string; freq: string; spot: string; tip: string; shots: number }> = {
+  'PicoWay Laser Picosecond': { wavelength: '1064nm / 532nm', energy: '2.4 J/cm²', freq: '10 Hz', spot: '7 mm Zoom', tip: 'Zoom Handpiece 1064nm', shots: 2200 },
+  'HIFU Ultraformer MPT': { wavelength: 'MMFU Ultrasound', energy: '0.8 - 1.2 J', freq: 'Continuous MP', spot: '25 mm Line', tip: 'Đầu Tip HIFU 3.0mm & 4.5mm', shots: 600 },
+  'Thermage FLX': { wavelength: 'Monopolar RF 6.78MHz', energy: 'Level 3.5', freq: 'AccuREP Pulse', spot: '4.0 cm²', tip: 'Total Tip 4.0 FLX', shots: 600 },
+  'Diode Laser Master 808nm': { wavelength: '808nm Diode', energy: '18 J/cm²', freq: '8 Hz', spot: '12x12 mm Sapphire', tip: 'Đầu Lạnh Sapphire -5°C', shots: 1500 },
+  'Fractional CO2 Laser Edge ONE': { wavelength: '10600nm CO2', energy: '35 mJ', freq: '200 Hz', spot: '120 µm Fractional', tip: 'Fractional Scanner', shots: 850 },
+  'Hydrafacial Syndeo Elite': { wavelength: 'Vortex-Fusion', energy: 'Vacuum 35 kPa', freq: 'Dual-Flow', spot: 'HydroPeel Tip', tip: 'Blue / Teal HydroPeel Tip', shots: 1 }
+};
 
 const EMRManagement: React.FC<EMRManagementProps> = ({
   medicalRecords,
   staffList,
   skinReports = [],
+  inventoryItems = [],
+  initialSelectedRecordId,
   onSaveRecord,
   onDeductTipShots,
+  onDeductConsumable,
   onNavigateToHardware
 }) => {
-  const [selectedRecordId, setSelectedRecordId] = useState<string>(medicalRecords[0]?.id || '');
+  const [selectedRecordId, setSelectedRecordId] = useState<string>(initialSelectedRecordId || medicalRecords[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkinType, setSelectedSkinType] = useState<string>('all');
   const [selectedSkinReportIndex, setSelectedSkinReportIndex] = useState(0);
+  const [clinicalNotice, setClinicalNotice] = useState<string>('');
+
+  useEffect(() => {
+    if (initialSelectedRecordId) {
+      setSelectedRecordId(initialSelectedRecordId);
+    }
+  }, [initialSelectedRecordId]);
 
   // Modals
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
@@ -73,15 +96,18 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
   const [sessionServiceName, setSessionServiceName] = useState('');
   const [sessionDoctorOrTech, setSessionDoctorOrTech] = useState(doctorsList[0]?.name || 'BS. CKI Nguyễn Mai');
   const [sessionMachineName, setSessionMachineName] = useState('PicoWay Laser Picosecond');
-  const [sessionWavelength, setSessionWavelength] = useState('1064nm Zoom');
-  const [sessionEnergy, setSessionEnergy] = useState('2.5 J/cm²');
+  const [sessionWavelength, setSessionWavelength] = useState('1064nm / 532nm');
+  const [sessionEnergy, setSessionEnergy] = useState('2.4 J/cm²');
   const [sessionFrequency, setSessionFrequency] = useState('10 Hz');
-  const [sessionSpotSize, setSessionSpotSize] = useState('7 mm');
-  const [sessionTipCartridge, setSessionTipCartridge] = useState('Tiêu Chuẩn');
+  const [sessionSpotSize, setSessionSpotSize] = useState('7 mm Zoom');
+  const [sessionTipCartridge, setSessionTipCartridge] = useState('Zoom Handpiece 1064nm');
   const [sessionShotsFired, setSessionShotsFired] = useState<number>(1800);
   const [sessionSkinReaction, setSessionSkinReaction] = useState('Hồng nhẹ, châm chích thoáng qua, đáp ứng lâm sàng tốt');
   const [sessionHomeCare, setSessionHomeCare] = useState('Rửa nước muối sinh lý 24h đầu, bôi serum B5 phục hồi, tránh nắng kỹ.');
   const [sessionDoctorNote, setSessionDoctorNote] = useState('Hạt sắc tố đáp ứng tốt, mật độ phân rã sắc tố cao.');
+  const [selectedConsumableId, setSelectedConsumableId] = useState<string>('');
+  const [consumableQty, setConsumableQty] = useState<number>(1);
+  const [consentSigned, setConsentSigned] = useState<boolean>(true);
 
   // Current active record
   const currentRecord = medicalRecords.find(r => r.id === selectedRecordId) || medicalRecords[0];
@@ -100,9 +126,25 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
     return true;
   });
 
+  const handleMachineChange = (machineName: string) => {
+    setSessionMachineName(machineName);
+    const preset = MACHINE_PRESETS[machineName];
+    if (preset) {
+      setSessionWavelength(preset.wavelength);
+      setSessionEnergy(preset.energy);
+      setSessionFrequency(preset.freq);
+      setSessionSpotSize(preset.spot);
+      setSessionTipCartridge(preset.tip);
+      setSessionShotsFired(preset.shots);
+    }
+  };
+
   const handleOpenAddSession = () => {
     if (!currentRecord) return;
     setSessionServiceName(currentRecord.treatmentPlan.split(':')[0] || 'Laser Điều Trị Chuyên Sâu');
+    setSelectedConsumableId(inventoryItems[0]?.id || '');
+    setConsumableQty(1);
+    setConsentSigned(true);
     setIsAddSessionModalOpen(true);
   };
 
@@ -130,7 +172,7 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
       skinReaction: sessionSkinReaction,
       homeCareInstruction: sessionHomeCare,
       doctorNote: sessionDoctorNote,
-      signatureVerified: true
+      signatureVerified: consentSigned
     };
 
     const updatedSessions = [...(currentRecord.sessions || []), newSession];
@@ -149,14 +191,24 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
       onDeductTipShots(sessionMachineName, sessionTipCartridge, Number(sessionShotsFired));
     }
 
-    alert(`✅ Đã lưu Buổi điều trị thứ ${nextSessionNum} thành công!\n• Đã ghi nhận thông số máy móc vào hồ sơ điện tử EMR.\n• Đã trừ ${sessionShotsFired} shot/xung tương ứng trong quản lý đầu tip công nghệ cao.`);
+    // Auto-deduct consumable item from Inventory (FIFO) if selected
+    if (onDeductConsumable && selectedConsumableId && consumableQty > 0) {
+      onDeductConsumable(
+        selectedConsumableId,
+        Number(consumableQty),
+        `Tiêu hao y tế Buổi #${nextSessionNum} - BN ${currentRecord.customerName} (${currentRecord.customerCode})`
+      );
+    }
+
+    setClinicalNotice(
+      `Đã lưu Buổi điều trị #${nextSessionNum} cho khách hàng ${currentRecord.customerName}: Đồng bộ thông số ${sessionMachineName} (-${sessionShotsFired.toLocaleString()} shots)${selectedConsumableId ? ' & xuất kho vật tư tiêu hao FIFO' : ''}.`
+    );
     setIsAddSessionModalOpen(false);
   };
 
   const handleCreatePatientRecord = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName.trim() || !newCustPhone.trim()) {
-      alert('Vui lòng nhập tên và số điện thoại khách hàng!');
       return;
     }
 
@@ -198,19 +250,18 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#3B2C35] via-[#5C3A3A] to-[#8B4F58] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-gradient-to-r from-[#3B2C35] via-[#5C3A3A] to-[#8B4F58] text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 tracking-wide uppercase">
-              Medical EMR System
-            </span>
-            <span className="text-xs bg-cyan-400/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-400/30 flex items-center gap-1">
+          <div className="flex items-center gap-2 text-xs text-white/80 font-medium">
+            <span>Medical EMR System</span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1 text-cyan-200">
               <ShieldCheck className="w-3.5 h-3.5" /> Chuẩn Y Khoa Quốc Tế
             </span>
           </div>
           <h2 className="text-2xl font-bold mt-1 tracking-tight">Hồ Sơ Bệnh Án Điện Tử & Theo Dõi Phác Đồ (EMR)</h2>
-          <p className="text-white/80 text-sm mt-1 max-w-2xl">
-            Lưu trữ lịch sử điều trị từng buổi, thông số máy công nghệ cao (Bước sóng, Năng lượng, Tần số, Số shot), hình ảnh Before/After và tự động đồng bộ kết quả soi da.
+          <p className="text-white/85 text-sm mt-1 max-w-2xl">
+            Lưu trữ lịch sử điều trị từng buổi, thông số máy công nghệ cao (Bước sóng, Năng lượng, Tần số, Số shot), tự động trừ kho dược mỹ phẩm tiêu hao và đồng bộ kết quả soi da VISIA.
           </p>
         </div>
 
@@ -223,12 +274,27 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
             setNewCustPlan('');
             setIsNewPatientModalOpen(true);
           }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#5C3A3A] hover:bg-rose-50 font-bold rounded-xl shadow transition-all duration-200 cursor-pointer whitespace-nowrap"
+          className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#5C3A3A] hover:bg-rose-50 font-bold rounded-xl shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0"
         >
           <Plus className="w-5 h-5 text-[#D97A7D]" />
           Mở Hồ Sơ Bệnh Án Mới
         </button>
       </div>
+
+      {clinicalNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-medium flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{clinicalNotice}</span>
+          </div>
+          <button
+            onClick={() => setClinicalNotice('')}
+            className="text-emerald-700 hover:underline font-semibold ml-4 shrink-0"
+          >
+            Đóng
+          </button>
+        </div>
+      )}
 
       {/* Main EMR Layout: Left List + Right Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -262,7 +328,7 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2 max-h-[700px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[700px] overflow-y-auto">
             {filteredRecords.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-400 space-y-3">
                 <FolderCheck className="w-8 h-8 mx-auto text-gray-300" />
@@ -793,10 +859,10 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Tên Máy Sử Dụng</label>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Tên Máy Sử Dụng (Tự động nạp preset)</label>
                   <select
                     value={sessionMachineName}
-                    onChange={e => setSessionMachineName(e.target.value)}
+                    onChange={e => handleMachineChange(e.target.value)}
                     className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-white"
                   >
                     <option value="PicoWay Laser Picosecond">PicoWay Laser Picosecond</option>
