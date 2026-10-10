@@ -123,30 +123,30 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#2C3E50] via-[#34495E] to-[#5C3A3A] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 tracking-wide uppercase">
+      <div className="bg-gradient-to-r from-[#2C3E50] via-[#34495E] to-[#5C3A3A] text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-white/20 tracking-wide uppercase">
               IoT & Smart Clinic Hardware
             </span>
-            <span className="text-xs bg-cyan-400/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-400/30 flex items-center gap-1">
-              <Cpu className="w-3.5 h-3.5" /> Giám Sát Phần Cứng Real-Time
+            <span className="text-[11px] sm:text-xs bg-cyan-400/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-400/30 flex items-center gap-1">
+              <Cpu className="w-3.5 h-3.5 shrink-0" /> Giám Sát Phần Cứng Real-Time
             </span>
           </div>
-          <h2 className="text-2xl font-bold mt-1 tracking-tight">Hệ Thống Thiết Bị Thẩm Mỹ & Soi Da AI 3D</h2>
-          <p className="text-white/80 text-sm mt-1 max-w-2xl">
+          <h2 className="text-xl sm:text-2xl font-bold mt-1.5 tracking-tight">Hệ Thống Thiết Bị Thẩm Mỹ & Soi Da AI 3D</h2>
+          <p className="text-white/80 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
             Theo dõi nhiệt độ, nguồn điện, số shoot đã bắn của các dòng máy công nghệ cao (Laser Pico, HIFU, RF), cảnh báo số shoot đầu tip và đồng bộ kết quả máy soi da AI trực tiếp vào EMR.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setIsSimulateScanModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-xl shadow transition-all cursor-pointer whitespace-nowrap text-xs"
+            className="flex-1 sm:flex-initial justify-center flex items-center gap-2 px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-xl shadow transition-all cursor-pointer whitespace-nowrap text-xs"
           >
-            <Camera className="w-4 h-4" />
+            <Camera className="w-4 h-4 shrink-0" />
             Soi Da AI Magic Mirror
           </button>
           <button
@@ -155,61 +155,61 @@ const SmartClinicHardware: React.FC<SmartClinicHardwareProps> = ({
               setTipCode(`TIP-UF-${Math.floor(100 + Math.random() * 900)}`);
               setIsNewTipModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-800 hover:bg-gray-100 font-bold rounded-xl shadow transition-all cursor-pointer whitespace-nowrap text-xs"
+            className="flex-1 sm:flex-initial justify-center flex items-center gap-2 px-4 py-2.5 bg-white text-gray-800 hover:bg-gray-100 font-bold rounded-xl shadow transition-all cursor-pointer whitespace-nowrap text-xs"
           >
-            <Plus className="w-4 h-4 text-[#D97A7D]" />
+            <Plus className="w-4 h-4 text-[#D97A7D] shrink-0" />
             Thêm Đầu Tip Máy
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-xs overflow-x-auto scrollbar-none scroll-smooth">
         <button
           onClick={() => setActiveTab('visia_hot_folder')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'visia_hot_folder'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <FolderSync className="w-4 h-4" />
+          <FolderSync className="w-4 h-4 shrink-0" />
           Trạm Thu Thập VISIA (Hot-Folder Agent)
         </button>
 
         <button
           onClick={() => setActiveTab('iot_devices')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'iot_devices'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Cpu className="w-4 h-4" />
+          <Cpu className="w-4 h-4 shrink-0" />
           Giám Sát Máy Móc IoT ({iotDevices.length} thiết bị)
         </button>
 
         <button
           onClick={() => setActiveTab('skin_analyzer')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'skin_analyzer'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4 shrink-0" />
           Báo Cáo Soi Da & Phân Tích ({skinReports.length})
         </button>
 
         <button
           onClick={() => setActiveTab('high_tech_tips')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'high_tech_tips'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Layers className="w-4 h-4" />
+          <Layers className="w-4 h-4 shrink-0" />
           Quản Lý Đầu Tip & Số Shoot Còn Lại ({highTechTips.length} đầu tip)
         </button>
       </div>

@@ -13,14 +13,9 @@ import {
   Phone,
   FileText,
   Calendar,
-  Award,
   Camera,
   HeartPulse,
   ArrowRight,
-  CheckCircle2,
-  Clock,
-  Activity,
-  Sparkles,
   UserCheck
 } from 'lucide-react';
 

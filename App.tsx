@@ -1393,6 +1393,48 @@ const App: React.FC = () => {
     persistClinicData({ bookings: updated });
   };
 
+  const handleToggleRoomStatus = (roomId: string) => {
+    const updatedRooms = clinicRooms.map(r => {
+      if (r.id === roomId) {
+        const nextStatus: ClinicRoom['status'] =
+          r.status === 'available' ? 'occupied' : r.status === 'occupied' ? 'cleaning' : 'available';
+        return { ...r, status: nextStatus };
+      }
+      return r;
+    });
+    setClinicRooms(updatedRooms);
+    persistClinicData({ rooms: updatedRooms });
+  };
+
+  const handleOpenPatientEMRFromBooking = (booking: Booking) => {
+    const existing = medicalRecords.find(
+      r => r.customerCode === booking.customerCode || r.customerPhone === booking.customerPhone
+    );
+    if (!existing) {
+      const newRec: MedicalRecord = {
+        id: `emr-${Date.now()}`,
+        customerCode: booking.customerCode,
+        customerName: booking.customerName,
+        customerPhone: booking.customerPhone,
+        gender: 'female',
+        skinType: 'combination',
+        status: 'active',
+        diagnosis: `Khám mới từ lịch hẹn: ${booking.serviceName}`,
+        treatmentPlan: `Phác đồ ${booking.serviceName}`,
+        totalSessions: 5,
+        completedSessions: 0,
+        sessions: [],
+        createdDate: new Date().toISOString().split('T')[0],
+        updatedDate: new Date().toISOString().split('T')[0],
+        doctorInCharge: 'BS. CKI Lê Thanh Vân'
+      };
+      const updated = [newRec, ...medicalRecords];
+      setMedicalRecords(updated);
+      persistClinicData({ emrRecords: updated });
+    }
+    setView('emr');
+  };
+
   // --- Render ---
   if (isLoading) {
     return (
@@ -1414,7 +1456,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDF7F8] text-[#5C3A3A]">
+    <div className="min-h-screen bg-[#FDF7F8] text-[#5C3A3A] flex flex-col overflow-x-hidden">
       <Header
         currentUser={loggedInUser}
         onSwitchRole={handleSwitchRole} 
@@ -1424,7 +1466,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         isCloudConnected={isCloudConnected}
       />
-      <main className="p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
+      <main className="flex-1 w-full max-w-[1600px] mx-auto px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-6 pb-24 md:pb-10">
         {!canAccessView(loggedInUser.role, view) ? (
           <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl shadow-sm border border-red-100 text-center">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
@@ -1529,6 +1571,8 @@ const App: React.FC = () => {
                 onSaveBooking={handleSaveBooking}
                 onUpdateStatus={handleUpdateBookingStatus}
                 onSendZnsReminder={handleSendZnsReminder}
+                onOpenPatientEMR={handleOpenPatientEMRFromBooking}
+                onToggleRoomStatus={handleToggleRoomStatus}
               />
             )}
 

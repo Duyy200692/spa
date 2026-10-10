@@ -323,33 +323,33 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
   return (
     <div className="space-y-6">
         {/* ... (Header & Tabs Code - SAME AS BEFORE) */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-serif font-bold text-[#D97A7D]">Quản lý Kho</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#D97A7D]">Quản lý Kho</h2>
                 {(currentUser.role === Role.Management || currentUser.role === Role.Accountant) && (
-                    <button onClick={handleSeedClick} disabled={isSeeding} className="text-xs bg-white hover:bg-gray-50 text-gray-600 px-3 py-1.5 rounded border border-gray-300 flex items-center gap-1 shadow-sm transition-colors">{isSeeding ? 'Đang xử lý...' : '🔄 Nạp dữ liệu gốc'}</button>
+                    <button onClick={handleSeedClick} disabled={isSeeding} className="text-xs bg-white hover:bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg border border-gray-300 flex items-center gap-1 shadow-xs transition-colors">{isSeeding ? 'Đang xử lý...' : '🔄 Nạp dữ liệu gốc'}</button>
                 )}
             </div>
-            <div className="flex space-x-2 bg-white rounded-lg p-1 border border-gray-200">
-                <button onClick={() => setTab('stock')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'stock' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Tồn kho</button>
-                <button onClick={() => setTab('history')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'history' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Lịch sử</button>
-                <button onClick={() => setTab('audit')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'audit' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Kiểm kê (Audit)</button>
+            <div className="flex items-center gap-1.5 bg-white rounded-xl p-1 border border-gray-200 w-full sm:w-auto overflow-x-auto scrollbar-none">
+                <button onClick={() => setTab('stock')} className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${tab === 'stock' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Tồn kho</button>
+                <button onClick={() => setTab('history')} className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${tab === 'history' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Lịch sử</button>
+                <button onClick={() => setTab('audit')} className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${tab === 'audit' ? 'bg-pink-100 text-[#D97A7D]' : 'text-gray-600 hover:bg-gray-50'}`}>Kiểm kê (Audit)</button>
             </div>
         </div>
 
         {/* STOCK TAB */}
         {tab === 'stock' && (
-            <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
-                <div className="p-4 bg-[#FDF7F8] border-b border-pink-100 flex flex-col md:flex-row gap-4">
-                    <input type="text" placeholder="Tìm kiếm nhanh (hỗ trợ không dấu, VD: 'dau goi')..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1 border border-gray-300 rounded-md p-2 text-sm focus:ring-[#E5989B] focus:border-[#E5989B]" />
-                    <select value={filterLocation} onChange={e => setFilterLocation(e.target.value)} className="border border-gray-300 rounded-md p-2 text-sm bg-white focus:ring-[#E5989B]">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
+                <div className="p-3 sm:p-4 bg-[#FDF7F8] border-b border-pink-100 flex flex-col sm:flex-row gap-3">
+                    <input type="text" placeholder="Tìm kiếm nhanh (hỗ trợ không dấu, VD: 'dau goi')..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-[#E5989B] focus:border-[#E5989B] bg-white" />
+                    <select value={filterLocation} onChange={e => setFilterLocation(e.target.value)} className="border border-gray-300 rounded-lg p-2 text-sm bg-white focus:ring-[#E5989B]">
                         <option value="all">Tất cả vị trí</option>
                         {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
                 </div>
-                <div className="overflow-x-auto max-h-[70vh]">
+                <div className="overflow-x-auto">
                     <table className="min-w-full whitespace-nowrap">
-                        <thead className="bg-gray-50 sticky top-0 z-10">
+                        <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th className="py-3 px-4 text-left text-xs font-bold text-gray-500 uppercase">Sản phẩm</th>
                                 <th className="py-3 px-4 text-left text-xs font-bold text-gray-500 uppercase">Vị trí</th>
@@ -423,9 +423,9 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
                         {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
                     </select>
                 </div>
-                <div className="overflow-x-auto max-h-[70vh]">
+                <div className="overflow-x-auto">
                     <table className="min-w-full whitespace-nowrap">
-                        <thead className="bg-gray-50 sticky top-0 z-10">
+                        <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th className="py-3 px-4 text-left text-xs font-bold text-gray-500 uppercase">Thời gian</th>
                                 <th className="py-3 px-4 text-left text-xs font-bold text-gray-500 uppercase">Người thực hiện</th>
@@ -548,10 +548,10 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
                             </select>
                         </div>
 
-                        <div className="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
-                            <div className="max-h-[60vh] overflow-y-auto">
+                        <div className="overflow-hidden border border-gray-200 rounded-xl shadow-xs">
+                            <div className="overflow-x-auto">
                                 <table className="min-w-full whitespace-nowrap">
-                                    <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Sản phẩm</th>
                                             <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100">Tồn Sổ Sách</th>

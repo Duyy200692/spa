@@ -248,19 +248,19 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#3B2C35] via-[#5C3A3A] to-[#8B4F58] text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-gradient-to-r from-[#3B2C35] via-[#5C3A3A] to-[#8B4F58] text-white p-4 sm:p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-white/80 font-medium">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-white/80 font-medium">
             <span>Medical EMR System</span>
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1 text-cyan-200">
               <ShieldCheck className="w-3.5 h-3.5" /> Chuẩn Y Khoa Quốc Tế
             </span>
           </div>
-          <h2 className="text-2xl font-bold mt-1 tracking-tight">Hồ Sơ Bệnh Án Điện Tử & Theo Dõi Phác Đồ (EMR)</h2>
-          <p className="text-white/85 text-sm mt-1 max-w-2xl">
+          <h2 className="text-xl sm:text-2xl font-bold mt-1 tracking-tight">Hồ Sơ Bệnh Án Điện Tử & Theo Dõi Phác Đồ (EMR)</h2>
+          <p className="text-white/85 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
             Lưu trữ lịch sử điều trị từng buổi, thông số máy công nghệ cao (Bước sóng, Năng lượng, Tần số, Số shot), tự động trừ kho dược mỹ phẩm tiêu hao và đồng bộ kết quả soi da VISIA.
           </p>
         </div>
@@ -274,9 +274,9 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
             setNewCustPlan('');
             setIsNewPatientModalOpen(true);
           }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#5C3A3A] hover:bg-rose-50 font-bold rounded-xl shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#5C3A3A] hover:bg-rose-50 font-bold rounded-xl shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 text-xs sm:text-sm"
         >
-          <Plus className="w-5 h-5 text-[#D97A7D]" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-[#D97A7D]" />
           Mở Hồ Sơ Bệnh Án Mới
         </button>
       </div>
@@ -297,9 +297,9 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
       )}
 
       {/* Main EMR Layout: Left List + Right Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Left Column: Patients List */}
-        <div className="lg:col-span-4 space-y-3">
+        <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-28 space-y-3 min-w-0">
           <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm space-y-3">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
@@ -328,7 +328,7 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2 max-h-[700px] overflow-y-auto">
+          <div className="space-y-2 max-h-[260px] sm:max-h-[320px] lg:max-h-[calc(100vh-220px)] overflow-y-auto pr-0.5">
             {filteredRecords.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-400 space-y-3">
                 <FolderCheck className="w-8 h-8 mx-auto text-gray-300" />
@@ -395,15 +395,15 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
         </div>
 
         {/* Right Column: Detailed Medical Record & Sessions */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 xl:col-span-9 space-y-5 sm:space-y-6 min-w-0">
           {currentRecord ? (
             <>
               {/* Patient Profile Card */}
-              <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-gray-100">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-bold text-gray-900">{currentRecord.customerName}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900">{currentRecord.customerName}</h3>
                       <span className="px-2 py-0.5 rounded font-mono text-xs bg-gray-100 text-gray-700 font-semibold">
                         {currentRecord.customerCode}
                       </span>
@@ -417,17 +417,17 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => window.print()}
-                      className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-1.5"
+                      className="flex-1 sm:flex-initial justify-center px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-1.5"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       In Hồ Sơ
                     </button>
                     <button
                       onClick={handleOpenAddSession}
-                      className="px-4 py-1.5 text-xs font-bold text-white bg-[#D97A7D] hover:bg-[#c76b6e] rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      className="flex-1 sm:flex-initial justify-center px-4 py-1.5 text-xs font-bold text-white bg-[#D97A7D] hover:bg-[#c76b6e] rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                       Thêm Buổi Điều Trị

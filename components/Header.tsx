@@ -113,20 +113,23 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       {/* ========================================================================= */}
-      {/* 1. DESKTOP HEADER (MD & UP) */}
+      {/* 1. DESKTOP & TABLET HEADER (MD & UP)                                      */}
       {/* ========================================================================= */}
-      <header className="hidden md:flex bg-white/95 backdrop-blur-md shadow-xs border-b border-gray-100 p-3 md:p-4 justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center space-x-3">
-          <WellnessLogo />
-          
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg md:text-xl font-medium text-[#5C3A3A] hidden lg:block">Clinic & Spa Manager</h1>
-              
+      <header className="hidden md:block bg-white/95 backdrop-blur-md shadow-xs border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-[1600px] mx-auto px-4 lg:px-8">
+          {/* Top Row: Brand, Role Badge & User Controls */}
+          <div className="flex items-center justify-between py-2.5 gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <WellnessLogo />
+              <span className="h-5 w-px bg-gray-200 hidden sm:inline-block" />
+              <h1 className="text-sm lg:text-base font-semibold text-[#5C3A3A] truncate hidden sm:block">
+                Clinic &amp; Spa Operating System
+              </h1>
+
               {/* Role Badge Indicator */}
               <button 
                 onClick={() => setIsPermissionMatrixOpen(true)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentRoleConfig.badgeBg} ${currentRoleConfig.badgeText} border ${currentRoleConfig.badgeBorder} cursor-pointer hover:shadow-xs transition-all`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentRoleConfig.badgeBg} ${currentRoleConfig.badgeText} border ${currentRoleConfig.badgeBorder} cursor-pointer hover:shadow-xs transition-all shrink-0`}
                 title="Nhấn để xem bảng phân quyền vai trò chi tiết"
               >
                 <span>{currentRoleConfig.icon}</span>
@@ -135,14 +138,14 @@ const Header: React.FC<HeaderProps> = ({
               </button>
 
               {isCloudConnected ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                   Cloud Sync
                 </span>
               ) : (
                 <button
                   onClick={() => setIsSyncInfoOpen(true)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 cursor-pointer transition-colors shrink-0"
                   title="Nhấn để xem trạng thái kết nối"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
@@ -151,104 +154,104 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Navigation Tabs (Responsive: short label on tablet, full label on desktop, horizontally scrollable) */}
-            <nav className="mt-1.5 flex items-center gap-1 border border-gray-200/80 p-1 rounded-xl bg-gray-50/90 shadow-2xs overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth max-w-[58vw] lg:max-w-[65vw] xl:max-w-none">
-              {filteredNavItems.map((item) => {
-                const isActive = currentView === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onViewChange(item.id)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 shrink-0 ${
-                      isActive ? activeStyle : inactiveStyle
-                    }`}
-                    title={item.label}
+            {/* Right Section: Role Switcher & User Profile */}
+            <div className="flex items-center gap-3 bg-gray-50/90 px-2.5 py-1.5 rounded-xl border border-gray-200/80 shadow-2xs shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="hidden lg:flex flex-col items-end leading-tight">
+                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Phân Quyền</span>
+                  <button 
+                    onClick={() => setIsPermissionMatrixOpen(true)}
+                    className="text-[10px] text-[#D97A7D] hover:underline font-semibold"
                   >
-                    <span>{item.icon}</span>
-                    <span className="hidden xl:inline">{item.label}</span>
-                    <span className="inline xl:hidden">{item.shortLabel || item.label}</span>
+                    Ma trận RBAC
                   </button>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
+                </div>
+                <select 
+                  value={currentUser.role} 
+                  onChange={(e) => onSwitchRole(e.target.value as Role)}
+                  className="bg-white border border-gray-300 text-gray-800 text-xs font-semibold rounded-lg focus:ring-[#E5989B] focus:border-[#E5989B] block py-1 px-2 outline-none cursor-pointer hover:border-[#D97A7D] transition-colors shadow-2xs"
+                >
+                  {Object.values(Role).map((r) => {
+                    const cfg = ROLE_CONFIGS[r];
+                    return (
+                      <option key={r} value={r}>
+                        {cfg.icon} {cfg.nameVi}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
 
-        {/* Right Section: Role Switcher & User Profile */}
-        <div className="flex items-center space-x-3 bg-gray-50/90 p-1.5 md:p-2 rounded-xl border border-gray-200/80 shadow-2xs">
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-1 mb-0.5">
-              <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Phân Quyền</span>
-              <button 
-                onClick={() => setIsPermissionMatrixOpen(true)}
-                className="text-[10px] text-[#D97A7D] hover:underline font-medium"
-              >
-                (Ma trận)
-              </button>
-            </div>
-            <select 
-              value={currentUser.role} 
-              onChange={(e) => onSwitchRole(e.target.value as Role)}
-              className="bg-white border border-gray-300 text-gray-800 text-xs font-semibold rounded-lg focus:ring-[#E5989B] focus:border-[#E5989B] block py-1 px-2 outline-none cursor-pointer hover:border-[#D97A7D] transition-colors shadow-2xs"
-            >
-              {Object.values(Role).map((r) => {
-                const cfg = ROLE_CONFIGS[r];
-                return (
-                  <option key={r} value={r}>
-                    {cfg.icon} {cfg.nameVi}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+              <div className="h-6 w-px bg-gray-300"></div>
 
-          <div className="h-7 w-px bg-gray-300 mx-1"></div>
+              {/* User Name & Profile */}
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col text-right leading-tight">
+                  <span className="text-[10px] text-gray-400">Xin chào</span>
+                  <div 
+                    className="flex items-center justify-end group cursor-pointer" 
+                    onClick={() => setIsEditModalOpen(true)}
+                    title="Chỉnh sửa tên hiển thị"
+                  >
+                    <span className="font-bold text-xs text-[#D97A7D] group-hover:underline max-w-[130px] truncate">
+                      {currentUser.name}
+                    </span>
+                  </div>
+                </div>
 
-          {/* User Name & Profile */}
-          <div className="flex items-center space-x-2">
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-gray-400">Xin chào</span>
-              <div 
-                className="flex items-center justify-end group cursor-pointer" 
-                onClick={() => setIsEditModalOpen(true)}
-                title="Chỉnh sửa tên hiển thị"
-              >
-                <span className="font-bold text-xs md:text-sm text-[#D97A7D] group-hover:underline mr-1">
-                  {currentUser.name}
-                </span>
+                <button 
+                  className="h-8 w-8 rounded-full bg-gradient-to-br from-[#E5989B] to-[#FCD5CE] flex items-center justify-center text-white font-bold text-xs shadow-xs cursor-pointer hover:opacity-90 transition-opacity shrink-0"
+                  onClick={onLogout}
+                  title="Đăng xuất"
+                >
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </button>
               </div>
             </div>
-
-            <button 
-              className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-[#E5989B] to-[#FCD5CE] flex items-center justify-center text-white font-bold text-sm shadow-xs cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={onLogout}
-              title="Đăng xuất"
-            >
-              {currentUser.name.charAt(0).toUpperCase()}
-            </button>
           </div>
+
+          {/* Bottom Row: Full-Width Module Navigation Bar */}
+          <nav className="flex items-center gap-1 py-1.5 border-t border-gray-100 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth">
+            {filteredNavItems.map((item) => {
+              const isActive = currentView === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onViewChange(item.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                    isActive ? activeStyle : inactiveStyle
+                  }`}
+                  title={item.label}
+                >
+                  <span>{item.icon}</span>
+                  <span className="hidden lg:inline">{item.label}</span>
+                  <span className="inline lg:hidden">{item.shortLabel || item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. MOBILE TOP APP BAR (SM & MOBILE) */}
+      {/* 2. MOBILE TOP APP BAR (SM & MOBILE)                                       */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden flex-col bg-white border-b border-gray-100 sticky top-0 z-40 shadow-xs">
-        <div className="flex items-center justify-between px-3.5 py-2.5">
+      <div className="flex md:hidden flex-col bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 shadow-2xs">
+        <div className="flex items-center justify-between px-3 py-2">
           {/* Brand & Active Role */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <WellnessLogo compact />
             <button
               onClick={() => setIsPermissionMatrixOpen(true)}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${currentRoleConfig.badgeBg} ${currentRoleConfig.badgeText} border ${currentRoleConfig.badgeBorder}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${currentRoleConfig.badgeBg} ${currentRoleConfig.badgeText} border ${currentRoleConfig.badgeBorder} shrink-0`}
             >
               <span>{currentRoleConfig.icon}</span>
-              <span className="truncate max-w-[100px]">{currentRoleConfig.nameVi.split('/')[0]}</span>
+              <span className="truncate max-w-[110px]">{currentRoleConfig.nameVi.split('/')[0]}</span>
             </button>
           </div>
 
           {/* Right Mobile Actions */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsEditModalOpen(true)}
               className="h-7 w-7 rounded-full bg-gray-100 text-gray-700 text-xs font-bold flex items-center justify-center border border-gray-200"
@@ -275,7 +278,7 @@ const Header: React.FC<HeaderProps> = ({
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 shrink-0 ${
                   isActive 
                     ? 'bg-[#D97A7D] text-white shadow-2xs font-bold' 
                     : 'bg-white text-gray-700 border border-gray-200/80 hover:bg-pink-50'
@@ -292,8 +295,8 @@ const Header: React.FC<HeaderProps> = ({
       {/* ========================================================================= */}
       {/* 3. FLOATING DARK CAPSULE BOTTOM NAVIGATION DOCK (FIXED & SNUG)           */}
       {/* ========================================================================= */}
-      <div className="md:hidden fixed bottom-3.5 left-0 right-0 z-40 px-3 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto bg-[#18181B]/95 text-white backdrop-blur-2xl rounded-full px-3 py-1.5 shadow-2xl border border-white/10 ring-1 ring-black/40 w-full max-w-[375px] mx-auto flex items-center justify-between">
+      <div className="md:hidden fixed bottom-3 left-0 right-0 z-40 px-3 pb-[env(safe-area-inset-bottom,0px)] flex justify-center pointer-events-none">
+        <div className="pointer-events-auto bg-[#18181B]/95 text-white backdrop-blur-2xl rounded-full px-2.5 py-1.5 shadow-2xl border border-white/10 ring-1 ring-black/40 w-full max-w-[380px] mx-auto flex items-center justify-between">
           {getDockItems().map((item) => {
             const isActive = currentView === item.id;
             return (

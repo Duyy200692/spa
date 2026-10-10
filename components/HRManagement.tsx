@@ -358,12 +358,12 @@ const HRManagement: React.FC<HRManagementProps> = ({
       </div>
 
       {/* Sub Tabs Navigation */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto scrollbar-none scroll-smooth">
         <button
           onClick={() => setActiveTab('staff')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'staff'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
           }`}
         >
@@ -375,9 +375,9 @@ const HRManagement: React.FC<HRManagementProps> = ({
 
         <button
           onClick={() => setActiveTab('tours')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'tours'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
           }`}
         >
@@ -389,9 +389,9 @@ const HRManagement: React.FC<HRManagementProps> = ({
 
         <button
           onClick={() => setActiveTab('attendance')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'attendance'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
           }`}
         >
@@ -400,9 +400,9 @@ const HRManagement: React.FC<HRManagementProps> = ({
 
         <button
           onClick={() => setActiveTab('payroll')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'payroll'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
           }`}
         >
@@ -417,7 +417,7 @@ const HRManagement: React.FC<HRManagementProps> = ({
       {activeTab === 'staff' && (
         <div className="space-y-4">
           {/* Quick Stat Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div className="bg-white p-4 rounded-xl border border-pink-100 shadow-sm">
               <span className="text-xs text-gray-500 font-medium">Tổng số nhân sự</span>
               <p className="text-2xl font-bold font-serif text-[#5C3A3A] mt-1">{totalStaffCount}</p>

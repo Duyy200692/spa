@@ -362,26 +362,26 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#693B4E] via-[#8B4F58] to-[#D97A7D] text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 tracking-wide uppercase">
+      <div className="bg-gradient-to-r from-[#693B4E] via-[#8B4F58] to-[#D97A7D] text-white p-4 sm:p-6 rounded-2xl shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-white/20 tracking-wide uppercase">
               Clinic CRM &amp; Marketing Automation
             </span>
-            <span className="text-xs bg-emerald-400/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
-              <Bot className="w-3.5 h-3.5" /> Customer Lifecycle &amp; AI Lead Scoring
+            <span className="text-[11px] sm:text-xs bg-emerald-400/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-400/30 flex items-center gap-1">
+              <Bot className="w-3.5 h-3.5 shrink-0" /> Customer Lifecycle &amp; AI Lead Scoring
             </span>
           </div>
-          <h2 className="text-2xl font-bold mt-1 tracking-tight">Hệ Thống Tự Động Hóa Vận Hành Vòng Đời Khách Hàng</h2>
-          <p className="text-white/80 text-sm mt-1 max-w-3xl">
+          <h2 className="text-xl sm:text-2xl font-bold mt-1.5 tracking-tight">Hệ Thống Tự Động Hóa Vận Hành Vòng Đời Khách Hàng</h2>
+          <p className="text-white/80 text-xs sm:text-sm mt-1 max-w-3xl leading-relaxed">
             Tối ưu CPA và tăng giá trị trọn đời (LTV) cho thẩm mỹ viện công nghệ cao: Chấm điểm Lead, chuỗi nuôi dưỡng Drip Campaigns, cẩm nang Home-care hậu điều trị, chống rời bỏ và chương trình Khách hàng thân thiết.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="text-right hidden sm:block text-xs text-white/80">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full lg:w-auto shrink-0">
+          <div className="text-left sm:text-right text-xs text-white/80">
             <div>Đã đồng bộ <strong>{bookings.length}</strong> lịch hẹn</div>
             <div><strong>{automatedMsgs.length}</strong> tin ZNS trong hàng đợi</div>
           </div>
@@ -392,85 +392,85 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
               handleSelectTemplate('reminder_24h');
               setIsNewCampaignModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#693B4E] hover:bg-rose-50 font-bold rounded-xl shadow text-xs transition-all duration-200 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#693B4E] hover:bg-rose-50 font-bold rounded-xl shadow text-xs transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0"
           >
-            <Send className="w-4 h-4 text-[#D97A7D]" />
+            <Send className="w-4 h-4 text-[#D97A7D] shrink-0" />
             Gửi Tin ZNS / SMS
           </button>
         </div>
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto scroll-smooth">
+      <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-xs overflow-x-auto scrollbar-none scroll-smooth">
         <button
           onClick={() => setActiveTab('marketing_leads')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'marketing_leads'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Target className="w-4 h-4" />
+          <Target className="w-4 h-4 shrink-0" />
           Phễu Chuyển Đổi &amp; Lead Scoring ({marketingLeads.length})
         </button>
 
         <button
           onClick={() => setActiveTab('drip_campaigns')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'drip_campaigns'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4 shrink-0" />
           Chuỗi Nuôi Dưỡng Drip Campaigns ({dripCampaigns.length})
         </button>
 
         <button
           onClick={() => setActiveTab('treatment_care')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'treatment_care'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <HeartPulse className="w-4 h-4" />
+          <HeartPulse className="w-4 h-4 shrink-0" />
           Hậu Điều Trị &amp; Chu Kỳ Phác Đồ ({postTreatmentTickets.length})
         </button>
 
         <button
           onClick={() => setActiveTab('churn_prevention')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'churn_prevention'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldAlert className="w-4 h-4 shrink-0" />
           Chống Rời Bỏ &gt;45 Ngày ({churnCustomers.length})
         </button>
 
         <button
           onClick={() => setActiveTab('loyalty_referral')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'loyalty_referral'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <Award className="w-4 h-4" />
+          <Award className="w-4 h-4 shrink-0" />
           Hạng Thẻ &amp; Giới Thiệu Bạn Bè ({loyaltyMembers.length})
         </button>
 
         <button
           onClick={() => setActiveTab('ai_advisor')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'ai_advisor'
-              ? 'bg-[#D97A7D] text-white shadow-sm'
+              ? 'bg-[#D97A7D] text-white shadow-xs'
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          <UserCheck className="w-4 h-4" />
+          <UserCheck className="w-4 h-4 shrink-0" />
           Tư Vấn Khách Hàng 1-1 (Trực Tuyến) &amp; CSAT
         </button>
       </div>
