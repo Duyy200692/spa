@@ -170,14 +170,14 @@ const ServiceManagement: React.FC<ServiceManagementProps> = ({ services, onAddSe
                     </div>
                 )}
 
-                {/* FIX: Added max-height and sticky header logic */}
-                <div className="bg-white rounded-lg shadow-md border border-gray-100 flex flex-col max-h-[75vh]">
-                    <div className="overflow-auto flex-grow">
+                {/* Full-flow table with horizontal trackpad glide and sticky columns */}
+                <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
                         <table className="min-w-full whitespace-nowrap border-collapse">
-                            <thead className="bg-[#FDF7F8] sticky top-0 z-20 shadow-sm">
+                            <thead className="bg-[#FDF7F8] border-b border-gray-200">
                                 <tr>
                                     {/* Sticky Left Column Header: Reduced width for tablet visibility */}
-                                    <th className="py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 top-0 z-30 bg-[#FDF7F8] min-w-[100px] max-w-[100px] md:min-w-[130px] md:max-w-[130px] lg:min-w-[250px] lg:max-w-[250px] border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tên Dịch vụ</th>
+                                    <th className="py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-[#FDF7F8] min-w-[100px] max-w-[100px] md:min-w-[130px] md:max-w-[130px] lg:min-w-[250px] lg:max-w-[250px] border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tên Dịch vụ</th>
                                     
                                     {activeTab === 'spa' ? (
                                         <>

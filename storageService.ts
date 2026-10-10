@@ -1,5 +1,5 @@
-import { collection, getDocs, limit, query } from 'firebase/firestore';
-import { db } from './firebaseConfig';
+import { collection, getDocs, limit, query, disableNetwork } from 'firebase/firestore';
+import { db, IS_CLOUD_CONFIGURED } from './firebaseConfig';
 import { User, Service, Promotion, InventoryItem, InventoryTransaction, AuditSession } from './types';
 import { 
   USERS as DEFAULT_USERS, 
@@ -133,12 +133,19 @@ export function persistAppData(data: {
  * Checks whether the current Firestore instance is accessible with current permissions.
  */
 export async function testFirestoreConnection(): Promise<{ accessible: boolean; errorInfo?: FirestoreErrorInfo }> {
+  if (!IS_CLOUD_CONFIGURED) {
+    return { accessible: false };
+  }
+
   try {
-    // Attempt a light read on 'users' collection to check permissions
     const q = query(collection(db, 'users'), limit(1));
-    await getDocs(q);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Firestore connection timeout')), 2500)
+    );
+    await Promise.race([getDocs(q), timeoutPromise]);
     return { accessible: true };
   } catch (error: any) {
+    disableNetwork(db).catch(() => {});
     const errorInfo = handleFirestoreError(error, OperationType.GET, 'users');
     return { accessible: false, errorInfo };
   }

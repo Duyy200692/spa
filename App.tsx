@@ -14,6 +14,7 @@ import SmartBookingManagement from './components/SmartBookingManagement';
 import EMRManagement from './components/EMRManagement';
 import CRMAutomation from './components/CRMAutomation';
 import SmartClinicHardware from './components/SmartClinicHardware';
+import TrackpadGestureManager from './components/shared/TrackpadGestureManager';
 import { 
   User, Promotion, Service, Role, InventoryItem, InventoryTransaction, AuditSession, AuditItem, 
   StaffMember, AttendanceRecord, TechnicianTour, PayrollRecord,
@@ -88,7 +89,7 @@ const App: React.FC = () => {
 
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [view, setView] = useState<View>('dashboard');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string>('');
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
 
@@ -1435,6 +1436,13 @@ const App: React.FC = () => {
     setView('emr');
   };
 
+  // Smoothly scroll back to top when switching views if scrolled down
+  useEffect(() => {
+    if (window.scrollY > 100) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [view]);
+
   // --- Render ---
   if (isLoading) {
     return (
@@ -1455,8 +1463,15 @@ const App: React.FC = () => {
     return <LoginScreen onLogin={handleLogin} error={loginError} />;
   }
 
+  const allowedViews = getRoleConfig(loggedInUser.role).allowedViews as View[];
+
   return (
-    <div className="min-h-screen bg-[#FDF7F8] text-[#5C3A3A] flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#FDF7F8] text-[#5C3A3A] flex flex-col overflow-x-clip">
+      <TrackpadGestureManager
+        currentView={view}
+        allowedViews={allowedViews}
+        onViewChange={setView}
+      />
       <Header
         currentUser={loggedInUser}
         onSwitchRole={handleSwitchRole} 
@@ -1493,7 +1508,7 @@ const App: React.FC = () => {
             </div>
           </div>
         ) : (
-          <>
+          <div key={view} className="animate-view-enter">
             {view === 'dashboard' && (
               <Dashboard
                 loggedInUser={loggedInUser}
@@ -1626,9 +1641,7 @@ const App: React.FC = () => {
                 onNavigateToEMR={() => setView('emr')}
               />
             )}
-
-
-          </>
+          </div>
         )}
       </main>
     </div>

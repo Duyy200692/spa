@@ -328,7 +328,7 @@ const EMRManagement: React.FC<EMRManagementProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2 max-h-[260px] sm:max-h-[320px] lg:max-h-[calc(100vh-220px)] overflow-y-auto pr-0.5">
+          <div className="space-y-2">
             {filteredRecords.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-400 space-y-3">
                 <FolderCheck className="w-8 h-8 mx-auto text-gray-300" />

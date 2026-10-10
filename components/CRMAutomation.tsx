@@ -401,7 +401,10 @@ const CRMAutomation: React.FC<CRMAutomationProps> = ({
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-xs overflow-x-auto scrollbar-none scroll-smooth">
+      <div
+        data-trackpad-tabs="true"
+        className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white rounded-xl border border-gray-200 shadow-xs overflow-x-auto scrollbar-none"
+      >
         <button
           onClick={() => setActiveTab('marketing_leads')}
           className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${

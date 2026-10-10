@@ -35,6 +35,8 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     icon: '👑',
     description: 'Toàn quyền điều hành: Xem, tạo, sửa, xóa tất cả hồ sơ Bệnh án EMR, CRM & ZNS, VISIA Thiết bị, Bảng lương, Kho và Tài khoản.',
     allowedViews: [
+      'holding_center',
+      'holding_hub',
       'smart_booking',
       'emr',
       'crm_automation',
@@ -45,7 +47,7 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
       'hr',
       'users'
     ],
-    defaultView: 'smart_booking',
+    defaultView: 'holding_center',
     capabilities: {
       emr: 'full',
       crmZns: 'full',
@@ -96,6 +98,7 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     icon: '📢',
     description: 'Truy cập CRM Automation, Tự động hóa tin nhắn ZNS/SMS, Phễu Leads marketing, Drip Campaign, CSAT, Khách hàng trung thành và Chương trình khuyến mãi.',
     allowedViews: [
+      'holding_hub',
       'crm_automation',
       'dashboard',
       'services',
@@ -124,6 +127,7 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     icon: '🛎️',
     description: 'Tiếp đón khách hàng: Quản lý lịch hẹn Smart Booking, check-in, xếp phòng clinic, gửi tin nhắn ZNS nhắc lịch và tra cứu bảng giá dịch vụ.',
     allowedViews: [
+      'holding_hub',
       'smart_booking',
       'dashboard',
       'services',
@@ -152,6 +156,7 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     icon: '💰',
     description: 'Tài chính & Vật tư: Quản lý xuất nhập tồn kho dược mỹ phẩm, kiểm kê kho, Bảng lương nhân viên và hoa hồng tour KTV.',
     allowedViews: [
+      'holding_hub',
       'inventory',
       'hr',
       'dashboard',
@@ -180,6 +185,7 @@ export const ROLE_CONFIGS: Record<Role, RoleConfig> = {
     icon: '📦',
     description: 'Phát triển dịch vụ: Quản lý bảng giá, phác đồ điều trị kỹ thuật số, chương trình khuyến mãi ưu đãi và vật tư tiêu hao.',
     allowedViews: [
+      'holding_hub',
       'services',
       'dashboard',
       'inventory',

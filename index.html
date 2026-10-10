@@ -38,12 +38,13 @@
       }
 
       /* ========================================================================= */
-      /* 2. ULTRA-SMOOTH TRACKPAD, TOUCH & MULTI-PLATFORM SCROLLING                */
+      /* 2. ULTRA-SMOOTH 120HZ TRACKPAD, TOUCH & MULTI-PLATFORM SCROLLING          */
       /* ========================================================================= */
       html {
-        scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
-        overflow-x: hidden;
+        overflow-x: clip;
+        overscroll-behavior-x: none;
+        scroll-padding-top: 6rem;
       }
 
       body {
@@ -51,7 +52,8 @@
         background-color: #FEFBFB;
         color: #4A4A4A;
         min-height: 100vh;
-        overflow-x: hidden;
+        overflow-x: clip;
+        overscroll-behavior-x: none;
         -webkit-overflow-scrolling: touch;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -59,24 +61,47 @@
 
       #root {
         min-height: 100vh;
+        overflow-x: clip;
       }
 
       .font-serif {
         font-family: 'Playfair Display', serif;
       }
 
-      /* Natural smooth scrolling for sub-panels and tables */
+      /* 1:1 Native Trackpad Inertia for sub-panels and tables (no CSS lag) */
       .overflow-y-auto,
       .overflow-auto {
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
+        overscroll-behavior-y: auto;
       }
 
       .overflow-x-auto {
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-        touch-action: pan-y pan-x;
+        touch-action: pan-x pan-y;
         overscroll-behavior-x: contain;
+      }
+
+      /* GPU Compositor Smooth View & Tab Transitions */
+      @keyframes viewEnter {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, 6px, 0);
+        }
+        100% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      .animate-view-enter {
+        animation: viewEnter 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .animate-view-enter {
+          animation: none !important;
+        }
       }
 
       /* Scrollbar removal utilities */

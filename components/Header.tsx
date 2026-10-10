@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Role } from '../types';
 import EditUserModal from './EditUserModal';
 import Modal from './shared/Modal';
@@ -69,10 +69,24 @@ const Header: React.FC<HeaderProps> = ({
   const [isSyncInfoOpen, setIsSyncInfoOpen] = useState(false);
   const [isPermissionMatrixOpen, setIsPermissionMatrixOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+  const mobileNavRef = useRef<HTMLDivElement | null>(null);
   
   const currentRoleConfig = getRoleConfig(currentUser.role);
   const allowedViews = currentRoleConfig.allowedViews;
   const filteredNavItems = NAV_ITEMS.filter(item => allowedViews.includes(item.id));
+
+  // Auto-center active navigation tab when currentView changes
+  useEffect(() => {
+    const activeDesktopBtn = desktopNavRef.current?.querySelector('[data-active="true"]') as HTMLElement | null;
+    if (activeDesktopBtn) {
+      activeDesktopBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+    const activeMobileBtn = mobileNavRef.current?.querySelector('[data-active="true"]') as HTMLElement | null;
+    if (activeMobileBtn) {
+      activeMobileBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [currentView]);
 
   // Determine priority 4 items for bottom dock with clear recognizable icons
   const getDockItems = (): { id: AppView; label: string; icon: React.ReactNode }[] => {
@@ -211,17 +225,22 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Bottom Row: Full-Width Module Navigation Bar */}
-          <nav className="flex items-center gap-1 py-1.5 border-t border-gray-100 overflow-x-auto whitespace-nowrap scrollbar-none scroll-smooth">
+          <nav
+            ref={desktopNavRef}
+            data-trackpad-tabs="true"
+            className="flex items-center gap-1 py-1.5 border-t border-gray-100 overflow-x-auto whitespace-nowrap scrollbar-none"
+          >
             {filteredNavItems.map((item) => {
               const isActive = currentView === item.id;
               return (
                 <button
                   key={item.id}
+                  data-active={isActive ? 'true' : 'false'}
                   onClick={() => onViewChange(item.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive ? activeStyle : inactiveStyle
                   }`}
-                  title={item.label}
+                  title={`${item.label} (Lướt 2 ngón trên Trackpad hoặc Alt + ←/→)`}
                 >
                   <span>{item.icon}</span>
                   <span className="hidden lg:inline">{item.label}</span>
@@ -271,14 +290,19 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Horizontal Quick-Scroll Chips */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none scroll-smooth bg-gray-50/70 border-t border-gray-100 text-xs whitespace-nowrap">
+        <div
+          ref={mobileNavRef}
+          data-trackpad-tabs="true"
+          className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-none bg-gray-50/70 border-t border-gray-100 text-xs whitespace-nowrap"
+        >
           {filteredNavItems.map((item) => {
             const isActive = currentView === item.id;
             return (
               <button
                 key={item.id}
+                data-active={isActive ? 'true' : 'false'}
                 onClick={() => onViewChange(item.id)}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 shrink-0 ${
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all duration-150 flex items-center gap-1 shrink-0 ${
                   isActive 
                     ? 'bg-[#D97A7D] text-white shadow-2xs font-bold' 
                     : 'bg-white text-gray-700 border border-gray-200/80 hover:bg-pink-50'

@@ -358,7 +358,10 @@ const HRManagement: React.FC<HRManagementProps> = ({
       </div>
 
       {/* Sub Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto scrollbar-none scroll-smooth">
+      <div
+        data-trackpad-tabs="true"
+        className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto scrollbar-none"
+      >
         <button
           onClick={() => setActiveTab('staff')}
           className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
